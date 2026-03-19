@@ -1,0 +1,33 @@
+[package]
+name = "notyra"
+version = "1.5.6"
+description = "A lightweight markdown editor"
+authors = ["Yuma Shintani <yuma@y-shin.net>"]
+edition = "2021"
+
+[lib]
+name = "notyra_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = ["protocol-asset", "devtools", "image-png"] }
+tauri-plugin-fs = "2"
+tauri-plugin-dialog = "2"
+tauri-plugin-store = "2"
+tauri-plugin-single-instance = "2"
+tauri-plugin-opener = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tokio = { version = "1", features = ["full"] }
+gray_matter = "0.2"
+notify = "6"
+parking_lot = "0.12"
+urlencoding = "2"
+url = "2"
+base64 = "0.22"
+
+[features]
+custom-protocol = ["tauri/custom-protocol"]

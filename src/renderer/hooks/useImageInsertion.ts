@@ -1,6 +1,49 @@
 import { useState, useMemo, useCallback, useRef } from 'react'
-import { EditorView } from '@codemirror/view'
+import { EditorView, WidgetType, Decoration } from '@codemirror/view'
+import type { DecorationSet } from '@codemirror/view'
+import { StateEffect, StateField } from '@codemirror/state'
 import type { Extension } from '@codemirror/state'
+import { tauriApi as App } from '@/renderer/lib/tauriApi'
+
+// ---- インライン ローディングウィジェット ----
+
+const setLoadingEffect = StateEffect.define<number | null>()
+
+class ImageLoadingWidget extends WidgetType {
+  toDOM(): HTMLElement {
+    const wrap = document.createElement('span')
+    wrap.className = 'cm-image-loading-indicator'
+    return wrap
+  }
+  ignoreEvent(): boolean {
+    return true
+  }
+  eq(): boolean {
+    return true
+  }
+}
+
+const imageLoadingField = StateField.define<DecorationSet>({
+  create: () => Decoration.none,
+  update(deco, tr) {
+    deco = deco.map(tr.changes)
+    for (const effect of tr.effects) {
+      if (effect.is(setLoadingEffect)) {
+        deco =
+          effect.value !== null
+            ? Decoration.set([
+                Decoration.widget({
+                  widget: new ImageLoadingWidget(),
+                  side: 1,
+                }).range(effect.value),
+              ])
+            : Decoration.none
+      }
+    }
+    return deco
+  },
+  provide: f => EditorView.decorations.from(f),
+})
 
 const SUPPORTED_IMAGE_EXTENSIONS = ['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg']
 const SUPPORTED_IMAGE_MIME_TYPES = [
@@ -79,7 +122,7 @@ export function useImageInsertion({
       if (!rootDir || !noteBaseName || isInsertingRef.current) return
       if (filePaths.length === 0) return
 
-      const App = window.App
+      // App は tauriApi import 済み
       if (!App) return
 
       isInsertingRef.current = true
@@ -118,12 +161,14 @@ export function useImageInsertion({
       if (!rootDir || !noteBaseName || isInsertingRef.current) return
       if (files.length === 0) return
 
-      const App = window.App
+      // App は tauriApi import 済み
       if (!App) return
 
+      const insertPos = view.state.selection.main.head
       isInsertingRef.current = true
       setIsInserting(true)
       setLastError(null)
+      view.dispatch({ effects: setLoadingEffect.of(insertPos) })
 
       try {
         const insertedPaths: string[] = []
@@ -153,6 +198,7 @@ export function useImageInsertion({
       } finally {
         isInsertingRef.current = false
         setIsInserting(false)
+        view.dispatch({ effects: setLoadingEffect.of(null) })
       }
     },
     [rootDir, noteBaseName, insertMarkdownImages]
@@ -166,12 +212,14 @@ export function useImageInsertion({
       if (!rootDir || !noteBaseName || isInsertingRef.current) return
       if (items.length === 0) return
 
-      const App = window.App
+      // App は tauriApi import 済み
       if (!App) return
 
+      const insertPos = view.state.selection.main.head
       isInsertingRef.current = true
       setIsInserting(true)
       setLastError(null)
+      view.dispatch({ effects: setLoadingEffect.of(insertPos) })
 
       try {
         const insertedPaths: string[] = []
@@ -196,92 +244,93 @@ export function useImageInsertion({
       } finally {
         isInsertingRef.current = false
         setIsInserting(false)
+        view.dispatch({ effects: setLoadingEffect.of(null) })
       }
     },
     [rootDir, noteBaseName, insertMarkdownImages]
   )
 
   const imageHandlerExtension = useMemo(() => {
-    return EditorView.domEventHandlers({
-      dragenter(event) {
-        if (event.dataTransfer?.types.includes('Files')) {
-          event.preventDefault()
+    return [
+      imageLoadingField,
+      EditorView.domEventHandlers({
+        dragenter(event) {
+          if (event.dataTransfer?.types.includes('Files')) {
+            event.preventDefault()
+            const target = event.currentTarget as HTMLElement
+            target.closest('.cm-editor')?.classList.add('editor-drop-target')
+          }
+        },
+        dragover(event) {
+          if (event.dataTransfer?.types.includes('Files')) {
+            event.preventDefault()
+            if (event.dataTransfer) {
+              event.dataTransfer.dropEffect = 'copy'
+            }
+          }
+        },
+        dragleave(event) {
           const target = event.currentTarget as HTMLElement
-          target.closest('.cm-editor')?.classList.add('editor-drop-target')
-        }
-      },
-      dragover(event) {
-        if (event.dataTransfer?.types.includes('Files')) {
-          event.preventDefault()
-          if (event.dataTransfer) {
-            event.dataTransfer.dropEffect = 'copy'
+          const editor = target.closest('.cm-editor')
+          const relatedTarget = event.relatedTarget as HTMLElement | null
+          if (!editor?.contains(relatedTarget)) {
+            editor?.classList.remove('editor-drop-target')
           }
-        }
-      },
-      dragleave(event) {
-        const target = event.currentTarget as HTMLElement
-        const editor = target.closest('.cm-editor')
-        const relatedTarget = event.relatedTarget as HTMLElement | null
-        if (!editor?.contains(relatedTarget)) {
-          editor?.classList.remove('editor-drop-target')
-        }
-      },
-      drop(event, view) {
-        const editor = (event.currentTarget as HTMLElement).closest(
-          '.cm-editor'
-        )
-        editor?.classList.remove('editor-drop-target')
-
-        const files = event.dataTransfer?.files
-        if (!files || files.length === 0) return false
-
-        const imageFiles = Array.from(files).filter(
-          f => isImageFile(f.name) || isImageMimeType(f.type)
-        )
-        if (imageFiles.length === 0) return false
-
-        event.preventDefault()
-        saveAndInsertFromDroppedFiles(view, imageFiles)
-
-        return true
-      },
-      paste(event, view) {
-        const items = event.clipboardData?.items
-        if (!items) return false
-
-        const imageItems = Array.from(items).filter(item =>
-          isImageMimeType(item.type)
-        )
-        if (imageItems.length === 0) return false
-
-        event.preventDefault()
-
-        Promise.all(
-          imageItems.map(async item => {
-            const blob = item.getAsFile()
-            if (!blob) return null
-            const buffer = await blob.arrayBuffer()
-            return { buffer, extension: MIME_TO_EXT[item.type] || 'png' }
-          })
-        ).then(results => {
-          const valid = results.filter(
-            (r): r is { buffer: ArrayBuffer; extension: string } => r !== null
+        },
+        drop(event, view) {
+          const editor = (event.currentTarget as HTMLElement).closest(
+            '.cm-editor'
           )
-          if (valid.length > 0) {
-            saveAndInsertFromBuffers(view, valid)
-          }
-        })
+          editor?.classList.remove('editor-drop-target')
 
-        return true
-      },
-    })
+          const files = event.dataTransfer?.files
+          if (!files || files.length === 0) return false
+
+          const imageFiles = Array.from(files).filter(
+            f => isImageFile(f.name) || isImageMimeType(f.type)
+          )
+          if (imageFiles.length === 0) return false
+
+          event.preventDefault()
+          saveAndInsertFromDroppedFiles(view, imageFiles)
+
+          return true
+        },
+        paste(event, view) {
+          const items = event.clipboardData?.items
+          if (!items) return false
+
+          const imageItems = Array.from(items).filter(item =>
+            isImageMimeType(item.type)
+          )
+          if (imageItems.length === 0) return false
+
+          event.preventDefault()
+
+          Promise.all(
+            imageItems.map(async item => {
+              const blob = item.getAsFile()
+              if (!blob) return null
+              const buffer = await blob.arrayBuffer()
+              return { buffer, extension: MIME_TO_EXT[item.type] || 'png' }
+            })
+          ).then(results => {
+            const valid = results.filter(
+              (r): r is { buffer: ArrayBuffer; extension: string } => r !== null
+            )
+            if (valid.length > 0) {
+              saveAndInsertFromBuffers(view, valid)
+            }
+          })
+
+          return true
+        },
+      }),
+    ]
   }, [saveAndInsertFromDroppedFiles, saveAndInsertFromBuffers])
 
   const handleToolbarImageInsert = useCallback(async () => {
     if (!rootDir || !noteBaseName || isInsertingRef.current) return
-
-    const App = window.App
-    if (!App) return
 
     const view = editorViewRef.current
     if (!view) return

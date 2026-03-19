@@ -6,6 +6,7 @@ import type { MarkdownNoteMeta } from '@/shared/types'
 import { SimpleTooltip } from './editor/Tooltip'
 import { NoteItem } from './NoteItem'
 import { SortDropdown, type SortOption } from './SortDropdown'
+import { tauriApi as App } from '@/renderer/lib/tauriApi'
 
 interface NoteListProps {
   notes: MarkdownNoteMeta[]
@@ -15,8 +16,6 @@ interface NoteListProps {
   onCreateNote?: () => void
   onDeleteNote?: (note: MarkdownNoteMeta) => void
 }
-
-const { App } = window
 
 export function NoteList({
   notes,

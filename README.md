@@ -4,7 +4,7 @@
 
 [English version](./README.en.md)
 
-Notyra は、Electron + React で構築されたデスクトップ向け Markdown エディタです。  
+Notyra は、**Tauri v2 + React** で構築されたデスクトップ向け Markdown エディタです。
 ローカルフォルダをルートにして `.md` ファイルを管理し、編集とプレビューを1つの画面で行えます。
 
 ## 利用者向け
@@ -22,6 +22,7 @@ Notyra は、Electron + React で構築されたデスクトップ向け Markdow
 - 自動保存（デバウンス）
 - ファイル変更監視による自動リロード
 - ノートを別ウィンドウで開く機能
+- PDF / HTML エクスポート
 
 ### 使い方（基本フロー）
 
@@ -52,20 +53,35 @@ updatedAt: 2026-02-12T00:00:00.000Z
 
 ### 技術スタック
 
-- Electron
-- React 19
-- TypeScript
-- Vite (electron-vite)
-- Tailwind CSS v4
-- CodeMirror 6
-- Vitest
-- Biome
+| レイヤー | 技術 |
+|---------|------|
+| UI フレームワーク | React 19 + TypeScript |
+| デスクトップランタイム | **Tauri v2** (Rust) |
+| ビルド | Vite 7 + Tauri CLI |
+| スタイリング | Tailwind CSS v4 |
+| エディタ | CodeMirror 6 |
+| テスト | Vitest |
+| リンター | Biome |
 
 ### 動作要件
 
+#### ユーザー向けバイナリ実行
+
+- 対応 OS: Windows 10/11 / macOS 12+ / Linux (Ubuntu 22.04+)
+- Rust のインストール不要（バイナリに含まれる）
+
+#### 開発環境構築
+
 - Node.js: `22.x`（`.nvmrc`）
 - pnpm: `10.x`（`packageManager`）
-- 対応OS: Windows / macOS（`electron-builder.ts` で設定）
+- **Rust toolchain**: [rustup](https://rustup.rs/) でインストール
+  ```bash
+  curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+  ```
+- Linux のみ: `libwebkit2gtk-4.1-dev` 等のシステム依存パッケージが必要
+  ```bash
+  sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+  ```
 
 ### セットアップ
 
@@ -76,36 +92,48 @@ pnpm install
 ### 開発
 
 ```bash
-pnpm dev
+pnpm dev        # tauri dev（フロントエンド + バックエンド同時起動）
 ```
 
 ### 主要コマンド
 
-- `pnpm dev`: 開発モード起動
-- `pnpm start`: プレビュー起動
-- `pnpm lint`: 静的解析
-- `pnpm lint:fix`: 静的解析 + 自動修正
-- `pnpm typecheck`: 型チェック
-- `pnpm test`: テスト実行
-- `pnpm test:watch`: テストウォッチ
-- `pnpm test:coverage`: カバレッジ付きテスト
-- `pnpm prebuild`: アプリビルド + 配布準備
-- `pnpm build`: パッケージビルド
-- `pnpm release`: 配布用リリース
-
-### 配布アプリの実行（未署名）
-
-未署名アプリの実行方法は `RUN_UNSIGNED_APPS.md` を参照してください。
+| コマンド | 内容 |
+|---------|------|
+| `pnpm dev` | 開発モード起動（Tauri dev server） |
+| `pnpm build` | 配布用バイナリのビルド（`tauri build`） |
+| `pnpm lint` | Biome による静的解析 |
+| `pnpm lint:fix` | 静的解析 + 自動修正 |
+| `pnpm typecheck` | TypeScript 型チェック |
+| `pnpm test` | Vitest テスト実行 |
+| `pnpm test:watch` | Vitest ウォッチモード |
+| `pnpm test:coverage` | カバレッジ付きテスト |
 
 ### プロジェクト構成（抜粋）
 
 ```text
+src-tauri/          # Tauri / Rust バックエンド
+  src/
+    commands/       # Tauri コマンド（markdown, image, export, window）
+    lib.rs          # アプリエントリ・プラグイン登録
+    state.rs        # 共有状態（ファイルウォッチャー等）
+  tauri.conf.json   # ウィンドウ設定・CSP・ビルド設定
+  Cargo.toml        # Rust 依存関係
+
 src/
-  main/       # Electron main process
-  preload/    # contextBridge 経由の API
-  renderer/   # React UI
-  shared/     # 共通型・定数
+  renderer/         # React UI（フロントエンド）
+    lib/
+      tauriApi.ts   # Tauri invoke ラッパー（IPC アダプター）
+      windowState.ts # ウィンドウ状態永続化
+    hooks/          # カスタムフック
+    components/     # UI コンポーネント
+    screens/        # 画面コンポーネント（main, editor）
+    plugins/        # rehype プラグイン
+  shared/           # 共通型定義
 ```
+
+### 配布アプリの実行（未署名）
+
+未署名アプリの実行方法は `RUN_UNSIGNED_APPS.md` を参照してください。
 
 ## コントリビューション
 

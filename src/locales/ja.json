@@ -141,6 +141,7 @@
     "created": "作成日",
     "modified": "更新日",
     "editMetadata": "メタデータを編集",
+    "noTags": "タグはありません",
     "addTag": "タグを追加",
     "removeTag": "削除",
     "moveFolder": "フォルダを移動",

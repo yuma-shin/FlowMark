@@ -4,11 +4,11 @@ import { CustomTitleBar } from '../components/CustomTitleBar'
 import { EditorView } from '../components/EditorView'
 import { useApp } from '../contexts/AppContext'
 import type { MarkdownNoteMeta } from '@/shared/types'
+import { tauriApi as App } from '@/renderer/lib/tauriApi'
 
 const EXTERNAL_CHANGE_COOLDOWN_MS = 5000
 
 export function EditorScreen() {
-  const { App } = window
   const [searchParams] = useSearchParams()
   const [note, setNote] = useState<MarkdownNoteMeta | null>(null)
   const [noteContent, setNoteContent] = useState<string>('')

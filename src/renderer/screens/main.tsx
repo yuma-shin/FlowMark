@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useApp } from '../contexts/AppContext'
+import { tauriApi as App } from '@/renderer/lib/tauriApi'
 import { CustomTitleBar } from '../components/CustomTitleBar'
 import { FolderTree } from '../components/FolderTree'
 import { NoteList } from '../components/NoteList'
@@ -52,16 +53,48 @@ export function MainScreen() {
   const lastLocalWriteTimeRef = useRef<number>(0)
   const reloadTimeoutRef = useRef<number | undefined>(undefined)
   const saveTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined)
-  const App = window.App
+  const rootDirRef = useRef<string | undefined>(settings.rootDir)
+
+  // rootDir の最新値を ref に反映（onCloseRequested クロージャーから参照）
+  useEffect(() => {
+    rootDirRef.current = settings.rootDir
+  }, [settings.rootDir])
+
+  // ウィンドウ終了時に未使用画像をクリーンアップする
+  useEffect(() => {
+    let unlisten: (() => void) | null = null
+    let isClosing = false
+
+    const setup = async () => {
+      const { getCurrentWindow } = await import('@tauri-apps/api/window')
+      const win = getCurrentWindow()
+      unlisten = await win.onCloseRequested(async event => {
+        if (isClosing) return
+        event.preventDefault()
+        isClosing = true
+
+        if (rootDirRef.current) {
+          try {
+            await App.image.cleanupAll(rootDirRef.current)
+          } catch (error) {
+            console.error('Failed to cleanup images on close:', error)
+          }
+        }
+
+        await win.destroy()
+      })
+    }
+
+    setup()
+
+    return () => {
+      unlisten?.()
+    }
+  }, [])
 
   // 初期化
   useEffect(() => {
     const initialize = async () => {
-      if (!App) {
-        setIsLoading(false)
-        return
-      }
-
       if (settingsLoading) {
         return
       }
@@ -195,10 +228,16 @@ export function MainScreen() {
     setShowRootDialog(false)
     setIsLoading(true)
 
+    if (path === settings.rootDir) {
+      // 同じフォルダが選択された場合、settings.rootDir は変わらないため
+      // useEffect が発火しない。直接ロードする（この時点でクロージャー内の
+      // settings.rootDir は既に正しい値なので stale closure の問題はない）。
+      loadNotes('').finally(() => setIsLoading(false))
+      return
+    }
+
     // settings.rootDir の変更が useEffect [settings.rootDir, settingsLoading] を
     // トリガーし、新しい rootDir で loadNotes() が正しく呼ばれる。
-    // ここで loadNotes() を直接呼ぶと、React state が未反映のスタールな
-    // クロージャーの settings.rootDir（古いパス）を参照してしまうため呼ばない。
     updateSettings({
       rootDir: path,
       lastSelectedFolder: '',
@@ -862,111 +901,97 @@ export function MainScreen() {
     }
   }
 
-  if (!App) {
-    return (
-      <div className="h-screen flex items-center justify-center bg-background">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">
-            Electronアプリとして実行してください
-          </h1>
-          <p className="text-gray-600 dark:text-gray-400">
-            このアプリはElectron環境でのみ動作します。
-            <br />
-            ブラウザで直接開くことはできません。
-          </p>
-        </div>
-      </div>
-    )
-  }
-
   if (isLoading || settingsLoading) {
     return (
-      <div className="h-screen flex items-center justify-center bg-background">
-        <div className="flex flex-col items-center justify-center gap-6">
-          {/* Notyra Logo with pulse animation */}
-          <div className="relative flex items-center justify-center">
-            <div
-              className="absolute inset-0 rounded-2xl blur-xl opacity-50 animate-pulse"
-              style={{
-                background:
-                  'linear-gradient(to bottom right, var(--theme-gradient-from), var(--theme-gradient-to))',
-              }}
-            ></div>
-            <svg
-              className="relative drop-shadow-2xl"
-              height="80"
-              viewBox="0 0 24 24"
-              width="80"
-            >
-              <defs>
-                <linearGradient
-                  id="logoGradient"
-                  x1="0%"
-                  x2="100%"
-                  y1="0%"
-                  y2="100%"
-                >
-                  <stop
-                    offset="0%"
-                    style={{ stopColor: 'var(--theme-gradient-from)' }}
-                  />
-                  <stop
-                    offset="100%"
-                    style={{ stopColor: 'var(--theme-gradient-to)' }}
-                  />
-                </linearGradient>
-              </defs>
-              <path
-                d="M6 2h12l6 6v14a2 2 0 01-2 2H6a2 2 0 01-2-2V4a2 2 0 012-2z"
-                fill="url(#logoGradient)"
-              />
-              <line
-                stroke="white"
-                strokeLinecap="round"
-                strokeWidth="1.5"
-                x1="8"
-                x2="16"
-                y1="10"
-                y2="10"
-              />
-              <line
-                stroke="white"
-                strokeLinecap="round"
-                strokeWidth="1.5"
-                x1="8"
-                x2="16"
-                y1="14"
-                y2="14"
-              />
-              <circle cx="8" cy="18" fill="white" r="1" />
-              <circle cx="12" cy="18" fill="white" r="1" />
-              <circle cx="16" cy="18" fill="white" r="1" />
-            </svg>
-          </div>
+      <div className="h-screen flex flex-col overflow-hidden bg-background">
+        <CustomTitleBar />
+        <div className="flex-1 flex items-center justify-center">
+          <div className="flex flex-col items-center justify-center gap-6">
+            {/* Notyra Logo with pulse animation */}
+            <div className="relative flex items-center justify-center">
+              <div
+                className="absolute inset-0 rounded-2xl blur-xl opacity-50 animate-pulse"
+                style={{
+                  background:
+                    'linear-gradient(to bottom right, var(--theme-gradient-from), var(--theme-gradient-to))',
+                }}
+              ></div>
+              <svg
+                className="relative drop-shadow-2xl"
+                height="80"
+                viewBox="0 0 24 24"
+                width="80"
+              >
+                <defs>
+                  <linearGradient
+                    id="logoGradient"
+                    x1="0%"
+                    x2="100%"
+                    y1="0%"
+                    y2="100%"
+                  >
+                    <stop
+                      offset="0%"
+                      style={{ stopColor: 'var(--theme-gradient-from)' }}
+                    />
+                    <stop
+                      offset="100%"
+                      style={{ stopColor: 'var(--theme-gradient-to)' }}
+                    />
+                  </linearGradient>
+                </defs>
+                <path
+                  d="M6 2h12l6 6v14a2 2 0 01-2 2H6a2 2 0 01-2-2V4a2 2 0 012-2z"
+                  fill="url(#logoGradient)"
+                />
+                <line
+                  stroke="white"
+                  strokeLinecap="round"
+                  strokeWidth="1.5"
+                  x1="8"
+                  x2="16"
+                  y1="10"
+                  y2="10"
+                />
+                <line
+                  stroke="white"
+                  strokeLinecap="round"
+                  strokeWidth="1.5"
+                  x1="8"
+                  x2="16"
+                  y1="14"
+                  y2="14"
+                />
+                <circle cx="8" cy="18" fill="white" r="1" />
+                <circle cx="12" cy="18" fill="white" r="1" />
+                <circle cx="16" cy="18" fill="white" r="1" />
+              </svg>
+            </div>
 
-          {/* Spinning loader */}
-          <div className="relative w-16 h-16 flex items-center justify-center">
-            <div className="absolute inset-0 border-4 border-gray-200 dark:border-gray-700 rounded-full"></div>
-            <div
-              className="absolute inset-0 border-4 border-transparent rounded-full animate-spin"
-              style={{ borderTopColor: 'var(--theme-accent)' }}
-            ></div>
-          </div>
+            {/* Spinning loader */}
+            <div className="relative w-16 h-16 flex items-center justify-center">
+              <div className="absolute inset-0 border-4 border-gray-200 dark:border-gray-700 rounded-full"></div>
+              <div
+                className="absolute inset-0 border-4 border-transparent rounded-full animate-spin"
+                style={{ borderTopColor: 'var(--theme-accent)' }}
+              ></div>
+            </div>
 
-          {/* Loading text */}
-          <div className="flex flex-col items-center justify-center gap-2">
-            <h2
-              className="text-xl font-semibold bg-clip-text text-transparent"
-              style={{
-                backgroundImage:
-                  'linear-gradient(to right, var(--theme-gradient-from), var(--theme-gradient-to))',
-              }}
-            >
-              Notyra
-            </h2>
-            <p className="text-sm text-gray-500 dark:text-gray-400 animate-pulse">
-              読み込み中...
-            </p>
+            {/* Loading text */}
+            <div className="flex flex-col items-center justify-center gap-2">
+              <h2
+                className="text-xl font-semibold bg-clip-text text-transparent"
+                style={{
+                  backgroundImage:
+                    'linear-gradient(to right, var(--theme-gradient-from), var(--theme-gradient-to))',
+                }}
+              >
+                Notyra
+              </h2>
+              <p className="text-sm text-gray-500 dark:text-gray-400 animate-pulse">
+                読み込み中...
+              </p>
+            </div>
           </div>
         </div>
       </div>

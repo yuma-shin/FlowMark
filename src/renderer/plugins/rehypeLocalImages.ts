@@ -1,5 +1,6 @@
 import { visit } from 'unist-util-visit'
 import type { Root, Element } from 'hast'
+import { convertFileSrc } from '@tauri-apps/api/core'
 
 interface RehypeLocalImagesOptions {
   noteDir: string
@@ -10,7 +11,8 @@ const PROTOCOL_PREFIXES = [
   'https://',
   'data:',
   'blob:',
-  'local-resource://',
+  'asset://',
+  'https://asset.localhost',
 ]
 
 export function rehypeLocalImages(options: RehypeLocalImagesOptions) {
@@ -23,15 +25,15 @@ export function rehypeLocalImages(options: RehypeLocalImagesOptions) {
       const src = node.properties?.src
       if (typeof src !== 'string' || !src) return
 
-      // Skip URLs that already have a protocol
+      // Skip URLs that already have a protocol (including Tauri asset protocol)
       if (PROTOCOL_PREFIXES.some(prefix => src.startsWith(prefix))) return
 
-      // Convert relative path to local-resource:// URL
-      // Normalize to forward slashes and remove drive letter colon for clean URL parsing
-      // e.g., F:\notes + images/foo.png → local-resource://F/notes/images/foo.png
-      const absolutePath = `${noteDir}/${src}`.replace(/\\/g, '/')
-      const urlPath = absolutePath.replace(/^([A-Za-z]):\//, '$1/')
-      node.properties.src = `local-resource://${urlPath}`
+      // Convert relative path to Tauri asset:// URL via convertFileSrc
+      const normalizedDir = noteDir.replace(/\\/g, '/')
+      const absolutePath = `${normalizedDir}/${src}`
+      node.properties.src = convertFileSrc(absolutePath)
+      // Store absolute path as fallback for environments where asset protocol fails
+      node.properties['data-tauri-path'] = absolutePath
     })
   }
 }

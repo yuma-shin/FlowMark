@@ -1,88 +1,189 @@
-name: Create Package and Release
+name: Release
 
 on:
   push:
-    tags: ["*"]
+    tags:
+      - "v*"
 
 permissions:
   contents: write
 
 jobs:
-  # macOS と Windows は並列でビルド・パブリッシュ（GitHub Release を作成する）
-  release:
+  # ------------------------------------------------------------------
+  # macOS ビルド
+  # ------------------------------------------------------------------
+  release-macos:
     if: startsWith(github.ref, 'refs/tags/v')
-    runs-on: ${{ matrix.os }}
-
-    strategy:
-      matrix:
-        os: [macos-latest, windows-latest]
+    runs-on: macos-latest
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - run: npm i -g --force corepack && corepack enable
 
-      - name: Install Node.js, NPM and PNPM
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.0.0
+          run_install: false
+
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
-          cache: "pnpm"
-      - run: pnpm install
+          node-version-file: .nvmrc
+          cache: pnpm
 
-      - name: Release Electron app
-        uses: daltonmenezes/action-electron-builder@v1.0.1
+      - name: Install frontend dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Setup Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
         with:
-          package_manager: "pnpm"
-          # GitHub token, automatically provided to the action
-          # (No need to define this secret in the repo settings)
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+          targets: aarch64-apple-darwin,x86_64-apple-darwin
 
-          # If the commit is tagged with a version (e.g. "v1.0.0"),
-          # release the app after building
-          release: true
+      - name: Cache Rust build
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
 
-  # Linux は macOS/Windows のリリース作成完了後に実行（レースコンディション回避）
+      - name: Build and publish (universal macOS)
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tagName: ${{ github.ref_name }}
+          releaseName: "Notyra ${{ github.ref_name }}"
+          releaseBody: "See the assets below to download Notyra for your platform."
+          releaseDraft: true
+          prerelease: false
+          args: --target universal-apple-darwin
+
+      - name: Create and upload macOS ZIP
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          APP_DIR="src-tauri/target/universal-apple-darwin/release/bundle/macos"
+          ZIP_NAME="Notyra_${VERSION}_universal.zip"
+          cd "$APP_DIR"
+          zip -r "${GITHUB_WORKSPACE}/${ZIP_NAME}" Notyra.app
+          cd "${GITHUB_WORKSPACE}"
+          gh release upload "${{ github.ref_name }}" "${ZIP_NAME}" --clobber
+
+  # ------------------------------------------------------------------
+  # Windows ビルド
+  # ------------------------------------------------------------------
+  release-windows:
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.0.0
+          run_install: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Install frontend dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Setup Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Rust build
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+
+      - name: Build and publish
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tagName: ${{ github.ref_name }}
+          releaseName: "Notyra ${{ github.ref_name }}"
+          releaseBody: "See the assets below to download Notyra for your platform."
+          releaseDraft: true
+          prerelease: false
+
+      - name: Create and upload Windows portable and ZIP
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: pwsh
+        run: |
+          $version = (Get-Content package.json -Raw | ConvertFrom-Json).version
+          $tagName = "${{ github.ref_name }}"
+
+          # ポータブル版: ビルド済みバイナリをそのまま配布
+          $portableName = "Notyra_${version}_x64-portable.exe"
+          Copy-Item "src-tauri\target\release\notyra.exe" $portableName
+
+          # ZIP版: ポータブルバイナリを圧縮
+          $zipName = "Notyra_${version}_x64.zip"
+          Compress-Archive -Path $portableName -DestinationPath $zipName
+
+          gh release upload $tagName $portableName $zipName --clobber
+
+  # ------------------------------------------------------------------
+  # Linux ビルド（macOS/Windows のドラフト作成完了後に実行）
+  # ------------------------------------------------------------------
   release-linux:
     if: startsWith(github.ref, 'refs/tags/v')
-    needs: release
-    runs-on: ubuntu-latest
+    needs: [release-macos, release-windows]
+    runs-on: ubuntu-22.04
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - run: npm i -g --force corepack && corepack enable
 
-      - name: Install Node.js, NPM and PNPM
+      - name: Install Linux system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            libappindicator3-dev \
+            librsvg2-dev \
+            patchelf \
+            libxdo-dev
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.0.0
+          run_install: false
+
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
-          cache: "pnpm"
-      - run: pnpm install
+          node-version-file: .nvmrc
+          cache: pnpm
 
-      - name: Install RPM build tools
-        run: sudo apt-get install -y rpm
+      - name: Install frontend dependencies
+        run: pnpm install --frozen-lockfile
 
-      - name: Release Electron app
-        uses: daltonmenezes/action-electron-builder@v1.0.1
+      - name: Setup Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Rust build
+        uses: Swatinem/rust-cache@v2
         with:
-          package_manager: "pnpm"
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          release: true
+          workspaces: src-tauri
 
-  trigger-vercel:
-    needs: [release, release-linux]
-    runs-on: ubuntu-latest
-    if: ${{ needs.release.result == 'success' && needs.release-linux.result == 'success' }}
-    steps:
-      - name: Trigger Vercel Deploy Hook
+      - name: Build and publish
+        uses: tauri-apps/tauri-action@v0
         env:
-          VERCEL_DEPLOY_HOOK: ${{ secrets.VERCEL_DEPLOY_HOOK }}
-          TAG: ${{ github.ref_name }}
-          REPO: ${{ github.repository }}
-        run: |
-          if [ -z "$VERCEL_DEPLOY_HOOK" ]; then
-            echo "VERCEL_DEPLOY_HOOK secret is not set, skipping Vercel trigger"
-            exit 0
-          fi
-          echo "Triggering Vercel deploy for tag: $TAG"
-          curl -sS -X POST "$VERCEL_DEPLOY_HOOK" -H "Content-Type: application/json" -d "{\"trigger\":\"release\",\"tag\":\"${TAG}\",\"repo\":\"${REPO}\"}"
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tagName: ${{ github.ref_name }}
+          releaseName: "Notyra ${{ github.ref_name }}"
+          releaseBody: "See the assets below to download Notyra for your platform."
+          releaseDraft: true
+          prerelease: false

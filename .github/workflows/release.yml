@@ -61,13 +61,16 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          VERSION=$(node -p "require('./package.json').version")
-          APP_DIR="src-tauri/target/universal-apple-darwin/release/bundle/macos"
+          VERSION=$(node -p "require('./src-tauri/tauri.conf.json').version")
+          APP_DIR="${GITHUB_WORKSPACE}/src-tauri/target/universal-apple-darwin/release/bundle/macos"
           ZIP_NAME="Notyra_${VERSION}_universal.zip"
-          cd "$APP_DIR"
-          APP_NAME=$(ls -d *.app | head -1)
-          zip -r "${GITHUB_WORKSPACE}/${ZIP_NAME}" "$APP_NAME"
-          cd "${GITHUB_WORKSPACE}"
+          APP_FILE=$(find "${APP_DIR}" -maxdepth 1 -type d -name "*.app" | head -1)
+          if [ -z "$APP_FILE" ]; then
+            echo "ERROR: No .app found in ${APP_DIR}"
+            ls -la "${APP_DIR}" || true
+            exit 1
+          fi
+          ditto -c -k --keepParent "${APP_FILE}" "${GITHUB_WORKSPACE}/${ZIP_NAME}"
           gh release upload "${{ github.ref_name }}" "${ZIP_NAME}" --clobber
 
   # ------------------------------------------------------------------
@@ -120,7 +123,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         shell: pwsh
         run: |
-          $version = (Get-Content package.json -Raw | ConvertFrom-Json).version
+          $version = (Get-Content src-tauri\tauri.conf.json -Raw | ConvertFrom-Json).version
           $tagName = "${{ github.ref_name }}"
 
           # ポータブル版: ビルド済みバイナリをそのまま配布

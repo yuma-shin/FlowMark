@@ -65,7 +65,8 @@ jobs:
           APP_DIR="src-tauri/target/universal-apple-darwin/release/bundle/macos"
           ZIP_NAME="Notyra_${VERSION}_universal.zip"
           cd "$APP_DIR"
-          zip -r "${GITHUB_WORKSPACE}/${ZIP_NAME}" Notyra.app
+          APP_NAME=$(ls -d *.app | head -1)
+          zip -r "${GITHUB_WORKSPACE}/${ZIP_NAME}" "$APP_NAME"
           cd "${GITHUB_WORKSPACE}"
           gh release upload "${{ github.ref_name }}" "${ZIP_NAME}" --clobber
 

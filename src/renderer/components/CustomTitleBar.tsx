@@ -14,8 +14,7 @@ import { SimpleTooltip } from './editor/Tooltip'
 import { ThemeToggle } from './ThemeToggle'
 import { LanguageToggle } from './LanguageToggle'
 import { ColorThemeSelector } from './ColorThemeSelector'
-
-const { App } = window
+import { tauriApi as App } from '@/renderer/lib/tauriApi'
 
 interface CustomTitleBarProps {
   onChangeRootFolder?: () => void
@@ -35,29 +34,23 @@ export function CustomTitleBar({
   const [isMaximized, setIsMaximized] = useState(false)
   const { settings } = useApp()
   const { t } = useTranslation()
-  const isMac = window.App?.platform === 'darwin'
+  const isMac = App.platform === 'darwin' || App.platform === 'macOS'
 
   useEffect(() => {
-    // Electron環境でのみ実行
-    if (window.App?.window) {
-      App.window.isMaximized().then(setIsMaximized)
-    }
+    App.window.isMaximized().then(setIsMaximized)
   }, [])
 
   const handleMinimize = async () => {
-    if (!window.App?.window) return
     await App.window.minimize()
   }
 
   const handleMaximize = async () => {
-    if (!window.App?.window) return
     await App.window.maximize()
     const maximized = await App.window.isMaximized()
     setIsMaximized(maximized)
   }
 
   const handleClose = async () => {
-    if (!window.App?.window) return
     await App.window.close()
   }
 
@@ -129,21 +122,22 @@ export function CustomTitleBar({
       {/* ドラッグ可能な領域 */}
       <div
         className="flex-1 h-full drag-region flex items-center"
-        style={{ WebkitAppRegion: 'drag' } as any}
+        data-tauri-drag-region
       >
         <div
           className={`flex items-center h-full gap-3 ${isMac ? 'pl-[80px] pr-4' : 'px-4'}`}
+          data-tauri-drag-region
         >
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2" data-tauri-drag-region>
             <NotyraLogo />
           </div>
           {settings.rootDir && (
             <>
-              <div className="w-px h-4 bg-border mx-0.5" />
               <div
-                className="flex items-center gap-1.5"
-                style={{ WebkitAppRegion: 'no-drag' } as any}
-              >
+                className="w-px h-4 bg-border mx-0.5"
+                data-tauri-drag-region
+              />
+              <div className="flex items-center gap-1.5">
                 <FiFolder className="text-muted-foreground" size={14} />
                 <span className="text-sm text-foreground font-medium">
                   {getRootFolderName()}
@@ -178,10 +172,7 @@ export function CustomTitleBar({
       </div>
 
       {/* Control Buttons */}
-      <div
-        className="flex items-center gap-0.5 mr-1.5"
-        style={{ WebkitAppRegion: 'no-drag' } as any}
-      >
+      <div className="flex items-center gap-0.5 mr-1.5">
         {onToggleSidebar && (
           <SimpleTooltip content={t('titleBar.toggleSidebar')}>
             <button
@@ -224,10 +215,7 @@ export function CustomTitleBar({
 
       {/* ウィンドウ操作ボタン (Windows のみ) */}
       {!isMac && (
-        <div
-          className="flex items-center gap-0.5 mr-1.5"
-          style={{ WebkitAppRegion: 'no-drag' } as any}
-        >
+        <div className="flex items-center gap-0.5 mr-1.5">
           <button
             className="p-1.5 rounded-md hover:bg-accent transition-colors"
             onClick={handleMinimize}

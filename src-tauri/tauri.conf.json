@@ -1,0 +1,55 @@
+{
+  "productName": "Notyra",
+  "identifier": "net.y-shin.notyra",
+  "version": "1.5.6",
+  "build": {
+    "frontendDist": "../dist",
+    "devUrl": "http://localhost:1420",
+    "beforeDevCommand": "pnpm dev:vite",
+    "beforeBuildCommand": "pnpm build:vite"
+  },
+  "app": {
+    "windows": [
+      {
+        "label": "main",
+        "title": "Notyra",
+        "width": 1600,
+        "height": 1000,
+        "minWidth": 800,
+        "minHeight": 600,
+        "decorations": false,
+        "center": true,
+        "dragDropEnabled": false
+      }
+    ],
+    "security": {
+      "assetProtocol": {
+        "enable": true,
+        "scope": ["**"]
+      },
+      "csp": "default-src 'self' asset: https://asset.localhost; connect-src 'self' http://ipc.localhost; style-src 'self' 'unsafe-inline'; style-src-elem 'self' 'unsafe-inline'; style-src-attr 'unsafe-inline'; script-src 'self'; img-src 'self' asset: https://asset.localhost http://asset.localhost data: blob:"
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["nsis", "dmg", "appimage", "deb", "rpm"],
+    "icon": [
+      "../src/resources/build/icons/dark/png/32x32.png",
+      "../src/resources/build/icons/dark/png/128x128.png",
+      "../src/resources/build/icons/dark/mac/icon.icns",
+      "../src/resources/build/icons/dark/win/icon.ico"
+    ],
+    "windows": {
+      "nsis": {
+        "installMode": "currentUser",
+        "startMenuFolder": "Notyra",
+        "installerIcon": "../src/resources/build/icons/dark/win/icon.ico",
+        "sidebarImage": "../src/resources/build/installer/sidebar.bmp",
+        "languages": ["English", "Japanese"],
+        "customLanguageFiles": {
+          "Japanese": "nsis/Japanese.nsh"
+        }
+      }
+    }
+  }
+}

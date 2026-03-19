@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import type { MarkdownNoteMeta } from '@/shared/types'
 import { filterNotesByFolder, filterNotesByTag } from '../utils/noteFilters'
+import { tauriApi as App } from '@/renderer/lib/tauriApi'
 
 interface UseNoteFilteringProps {
   allNotes: MarkdownNoteMeta[]
@@ -58,7 +59,6 @@ export function useNoteManagement({
   setFolderTree,
   setFilteredNotes,
 }: UseNoteManagementProps) {
-  const { App } = window
   void allNotes
 
   const createNote = async (title: string) => {
@@ -128,7 +128,6 @@ export function useFileWatcher({
   selectedNote,
   setNoteContent,
 }: UseFileWatcherProps) {
-  const { App } = window
   const saveTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined)
   const lastSaveTimeRef = useRef<number>(0)
   const reloadTimeoutRef = useRef<number | undefined>(undefined)

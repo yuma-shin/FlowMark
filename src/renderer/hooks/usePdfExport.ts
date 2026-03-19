@@ -106,22 +106,20 @@ async function renderMermaidInHtml(
 async function inlineLocalImages(html: string): Promise<string> {
   const parser = new DOMParser()
   const doc = parser.parseFromString(html, 'text/html')
-  const images = doc.querySelectorAll<HTMLImageElement>(
-    'img[src^="local-resource://"]'
-  )
+
+  // data-tauri-path 属性を持つ画像を Tauri コマンド経由で base64 に変換する。
+  // fetch() は Tauri のアセットプロトコルでハングすることがあるため使用しない。
+  const { tauriApi } = await import('@/renderer/lib/tauriApi')
+  const images = doc.querySelectorAll<HTMLImageElement>('img[data-tauri-path]')
 
   await Promise.all(
     Array.from(images).map(async img => {
+      const tauriPath = img.getAttribute('data-tauri-path')
+      if (!tauriPath) return
       try {
-        const response = await fetch(img.src)
-        const blob = await response.blob()
-        const base64 = await new Promise<string>((resolve, reject) => {
-          const reader = new FileReader()
-          reader.onload = () => resolve(reader.result as string)
-          reader.onerror = reject
-          reader.readAsDataURL(blob)
-        })
-        img.src = base64
+        const dataUrl = await tauriApi.image.getAsBase64(tauriPath)
+        img.src = dataUrl
+        img.removeAttribute('data-tauri-path')
       } catch {
         // 変換失敗時は元のsrcを維持
       }
@@ -239,7 +237,17 @@ export function usePdfExport() {
       setIsExporting(true)
       try {
         const fullHtml = await buildExportHtml(markdownContent, noteDir, title)
-        return await window.App.export.pdf(fullHtml, title)
+
+        // html2pdf.js + html2canvas は Tauri WebView2 でフリーズするため使用しない。
+        // ヘッドレス Edge (msedge.exe --headless=new --print-to-pdf) でダイアログなしに PDF を生成する。
+        // Edge が見つからない場合は Rust 側でエラーを返す。
+        const { tauriApi } = await import('@/renderer/lib/tauriApi')
+        return await tauriApi.export.pdf(fullHtml, title)
+      } catch (error) {
+        return {
+          success: false,
+          error: error instanceof Error ? error.message : String(error),
+        }
       } finally {
         setIsExporting(false)
       }
@@ -256,7 +264,8 @@ export function usePdfExport() {
       setIsHtmlExporting(true)
       try {
         const fullHtml = await buildExportHtml(markdownContent, noteDir, title)
-        return await window.App.export.html(fullHtml, title)
+        const { tauriApi } = await import('@/renderer/lib/tauriApi')
+        return await tauriApi.export.html(fullHtml, title)
       } finally {
         setIsHtmlExporting(false)
       }

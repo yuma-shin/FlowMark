@@ -12,7 +12,7 @@ export default defineConfig({
         test: {
           name: 'node',
           environment: 'node',
-          include: ['.test/main/**/*.test.ts', '.test/shared/**/*.test.ts', '.test/shared/**/*.test-d.ts'],
+          include: ['.test/shared/**/*.test.ts', '.test/shared/**/*.test-d.ts'],
           setupFiles: ['.test/helpers/setup-node.ts'],
         },
       },
@@ -21,7 +21,10 @@ export default defineConfig({
         test: {
           name: 'jsdom',
           environment: 'jsdom',
-          include: ['.test/renderer/**/*.test.{ts,tsx}'],
+          include: [
+            '.test/renderer/**/*.test.{ts,tsx}',
+            'src/renderer/lib/__tests__/**/*.test.{ts,tsx}',
+          ],
           setupFiles: ['.test/helpers/setup-renderer.ts'],
         },
       },
@@ -30,7 +33,7 @@ export default defineConfig({
       provider: 'v8',
       reporter: ['text', 'html', 'lcov'],
       include: ['src/**/*.{ts,tsx}'],
-      exclude: ['src/resources/**', 'src/lib/electron-app/release/**'],
+      exclude: ['src/resources/**'],
     },
   },
 })

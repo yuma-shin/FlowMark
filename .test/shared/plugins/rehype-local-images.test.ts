@@ -1,4 +1,11 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
+
+// convertFileSrc はブラウザ（Tauri WebView）専用 API のため、テスト環境でモックする
+vi.mock('@tauri-apps/api/core', () => ({
+  convertFileSrc: (path: string) =>
+    `asset://localhost/${encodeURIComponent(path.replace(/\\/g, '/'))}`,
+}))
+
 import { rehypeLocalImages } from '@/renderer/plugins/rehypeLocalImages'
 import { remark } from 'remark'
 import remarkRehype from 'remark-rehype'
@@ -14,10 +21,11 @@ async function processMarkdown(md: string, noteDir: string): Promise<string> {
 }
 
 describe('rehypeLocalImages', () => {
-  it('should convert relative image paths to local-resource:// URLs', async () => {
+  it('should convert relative image paths to asset:// URLs', async () => {
     const md = '![alt](images/photo.png)'
     const html = await processMarkdown(md, '/root/notes')
-    expect(html).toContain('src="local-resource:///root/notes/images/photo.png"')
+    expect(html).toContain('src="asset://localhost/')
+    expect(html).toContain('images%2Fphoto.png')
   })
 
   it('should skip absolute http URLs', async () => {
@@ -32,16 +40,17 @@ describe('rehypeLocalImages', () => {
     expect(html).toContain('src="data:image/png;base64,abc"')
   })
 
-  it('should skip already converted local-resource:// URLs', async () => {
-    const md = '![alt](local-resource:///root/notes/images/photo.png)'
+  it('should skip already converted asset:// URLs', async () => {
+    const md = '![alt](asset://localhost/root/notes/images/photo.png)'
     const html = await processMarkdown(md, '/root/notes')
-    expect(html).toContain('src="local-resource:///root/notes/images/photo.png"')
+    expect(html).toContain('src="asset://localhost/root/notes/images/photo.png"')
   })
 
   it('should handle images/ prefix correctly', async () => {
     const md = '![test](images/note_20260216_001.jpg)'
     const html = await processMarkdown(md, '/my/project')
-    expect(html).toContain('src="local-resource:///my/project/images/note_20260216_001.jpg"')
+    expect(html).toContain('src="asset://localhost/')
+    expect(html).toContain('note_20260216_001.jpg')
   })
 
   it('should handle blob: URLs by skipping them', async () => {
@@ -53,20 +62,23 @@ describe('rehypeLocalImages', () => {
   it('should handle multiple images in a single document', async () => {
     const md = '![a](images/a.png)\n\n![b](https://cdn.example.com/b.png)\n\n![c](images/c.jpg)'
     const html = await processMarkdown(md, '/root')
-    expect(html).toContain('src="local-resource:///root/images/a.png"')
+    // 相対パスは asset:// に変換される
+    expect(html).toMatch(/src="asset:\/\/localhost\/[^"]*a\.png"/)
     expect(html).toContain('src="https://cdn.example.com/b.png"')
-    expect(html).toContain('src="local-resource:///root/images/c.jpg"')
+    expect(html).toMatch(/src="asset:\/\/localhost\/[^"]*c\.jpg"/)
   })
 
   it('should handle Windows-style noteDir paths with forward slashes', async () => {
     const md = '![alt](images/photo.png)'
     const html = await processMarkdown(md, 'C:/Users/test/notes')
-    expect(html).toContain('src="local-resource://C/Users/test/notes/images/photo.png"')
+    expect(html).toContain('src="asset://localhost/')
+    expect(html).toContain('photo.png')
   })
 
   it('should handle Windows-style noteDir paths with backslashes', async () => {
     const md = '![alt](images/photo.png)'
     const html = await processMarkdown(md, 'C:\\Users\\test\\notes')
-    expect(html).toContain('src="local-resource://C/Users/test/notes/images/photo.png"')
+    expect(html).toContain('src="asset://localhost/')
+    expect(html).toContain('photo.png')
   })
 })

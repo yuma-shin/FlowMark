@@ -1,10 +1,10 @@
 import { useEffect } from 'react'
+import { tauriApi as App } from '@/renderer/lib/tauriApi'
 
 export function useLinkHandler(
   html: string,
   containerRef: React.RefObject<HTMLDivElement | null>
 ) {
-  const { App } = window
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
       const target = e.target as HTMLElement
@@ -18,11 +18,7 @@ export function useLinkHandler(
           (href.startsWith('http://') || href.startsWith('https://'))
         ) {
           e.preventDefault()
-          if (window.App?.shell) {
-            App.shell.openExternal(href)
-          } else {
-            window.open(href, '_blank')
-          }
+          App.shell.openExternal(href)
         }
       }
     }

@@ -202,7 +202,7 @@ pub async fn open_print_window(
                 .map_err(|e: url::ParseError| e.to_string())?,
         ),
     )
-    .title(&format!("{} — 印刷プレビュー", title))
+    .title(format!("{} — 印刷プレビュー", title))
     .inner_size(1050.0, 850.0)
     .center()
     .initialization_script(init_script)

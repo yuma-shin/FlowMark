@@ -437,9 +437,9 @@ pub async fn rename_note(old_path: String, new_title: String) -> Result<Option<S
 
 fn update_front_matter(raw: &str, body: &str, title: &str, updated_at: &str) -> String {
     // 既存のフロントマターを更新する
-    if raw.starts_with("---") {
-        if let Some(end) = raw[3..].find("---") {
-            let fm_block = &raw[3..end + 3];
+    if let Some(stripped) = raw.strip_prefix("---") {
+        if let Some(end) = stripped.find("---") {
+            let fm_block = &stripped[..end];
             // title と updatedAt だけ置換
             let new_fm = fm_block
                 .lines()

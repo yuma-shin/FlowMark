@@ -62,15 +62,24 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           VERSION=$(node -p "require('./src-tauri/tauri.conf.json').version")
-          APP_DIR="${GITHUB_WORKSPACE}/src-tauri/target/universal-apple-darwin/release/bundle/macos"
+          DMG_FILE="${GITHUB_WORKSPACE}/src-tauri/target/universal-apple-darwin/release/bundle/dmg/Notyra_${VERSION}_universal.dmg"
           ZIP_NAME="Notyra_${VERSION}_universal.zip"
-          APP_FILE=$(find "${APP_DIR}" -maxdepth 1 -type d -name "*.app" | head -1)
+
+          # DMG をマウントして .app を取り出す（Tauri は DMG 作成後に .app を削除するため）
+          MOUNT_POINT=$(mktemp -d)
+          hdiutil attach "${DMG_FILE}" -mountpoint "${MOUNT_POINT}" -nobrowse -quiet
+
+          APP_FILE=$(find "${MOUNT_POINT}" -maxdepth 1 -type d -name "*.app" | head -1)
           if [ -z "$APP_FILE" ]; then
-            echo "ERROR: No .app found in ${APP_DIR}"
-            ls -la "${APP_DIR}" || true
+            echo "ERROR: No .app found in DMG"
+            ls -la "${MOUNT_POINT}" || true
+            hdiutil detach "${MOUNT_POINT}" -quiet || true
             exit 1
           fi
+
           ditto -c -k --keepParent "${APP_FILE}" "${GITHUB_WORKSPACE}/${ZIP_NAME}"
+          hdiutil detach "${MOUNT_POINT}" -quiet
+
           gh release upload "${{ github.ref_name }}" "${ZIP_NAME}" --clobber
 
   # ------------------------------------------------------------------

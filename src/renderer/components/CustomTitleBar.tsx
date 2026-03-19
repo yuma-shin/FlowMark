@@ -34,7 +34,10 @@ export function CustomTitleBar({
   const [isMaximized, setIsMaximized] = useState(false)
   const { settings } = useApp()
   const { t } = useTranslation()
-  const isMac = App.platform === 'darwin' || App.platform === 'macOS'
+  const isMac =
+    App.platform === 'darwin' ||
+    App.platform === 'macOS' ||
+    App.platform.startsWith('Mac')
 
   useEffect(() => {
     App.window.isMaximized().then(setIsMaximized)

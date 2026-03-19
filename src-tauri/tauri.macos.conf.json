@@ -1,0 +1,19 @@
+{
+  "app": {
+    "windows": [
+      {
+        "label": "main",
+        "title": "Notyra",
+        "width": 1600,
+        "height": 1000,
+        "minWidth": 800,
+        "minHeight": 600,
+        "decorations": true,
+        "titleBarStyle": "overlay",
+        "hiddenTitle": true,
+        "center": true,
+        "dragDropEnabled": false
+      }
+    ]
+  }
+}

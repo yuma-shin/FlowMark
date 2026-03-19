@@ -38,20 +38,22 @@ export default defineConfig(async () => ({
     chunkSizeWarningLimit: 2048,
     rollupOptions: {
       output: {
-        manualChunks: {
-          mermaid: ['mermaid'],
-          editor: [
-            '@codemirror/view',
-            '@codemirror/state',
-            '@uiw/react-codemirror',
-          ],
-          markdown: [
-            'remark',
-            'remark-gfm',
-            'remark-rehype',
-            'rehype-highlight',
-            'rehype-stringify',
-          ],
+        manualChunks: (id: string) => {
+          if (id.includes('mermaid')) return 'mermaid'
+          if (
+            id.includes('@codemirror/view') ||
+            id.includes('@codemirror/state') ||
+            id.includes('@uiw/react-codemirror')
+          )
+            return 'editor'
+          if (
+            id.includes('remark') ||
+            id.includes('remark-gfm') ||
+            id.includes('remark-rehype') ||
+            id.includes('rehype-highlight') ||
+            id.includes('rehype-stringify')
+          )
+            return 'markdown'
         },
       },
     },

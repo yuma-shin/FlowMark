@@ -141,6 +141,7 @@
     "created": "Created",
     "modified": "Modified",
     "editMetadata": "Edit Metadata",
+    "noTags": "No tags",
     "addTag": "Add tag",
     "removeTag": "Remove",
     "moveFolder": "Move to folder",

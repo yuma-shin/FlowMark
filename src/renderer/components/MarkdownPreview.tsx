@@ -1,12 +1,15 @@
 import type React from 'react'
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useMarkdownProcessing } from '@/renderer/hooks/useMarkdownProcessing'
 import { useCodeCopyHandler } from '@/renderer/hooks/useCodeCopyHandler'
 import { useCheckboxHandler } from '@/renderer/hooks/useCheckboxHandler'
 import { useLinkHandler } from '@/renderer/hooks/useLinkHandler'
 import { useImageLightbox } from '@/renderer/hooks/useImageLightbox'
+import { tauriApi } from '@/renderer/lib/tauriApi'
 import 'github-markdown-css/github-markdown-light.css'
 import 'github-markdown-css/github-markdown-dark.css'
+import hljsLightCss from 'highlight.js/styles/github.min.css?inline'
+import hljsDarkCss from 'highlight.js/styles/github-dark.min.css?inline'
 
 interface MarkdownPreviewProps {
   content: string
@@ -29,6 +32,10 @@ export function MarkdownPreview({
 }: MarkdownPreviewProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const contentRef = useRef<HTMLDivElement>(null)
+  const [isDark, setIsDark] = useState(() =>
+    document.documentElement.classList.contains('dark')
+  )
+  const prevIsDarkRef = useRef<boolean | null>(null)
 
   // Custom hooks
   const html = useMarkdownProcessing(content, noteDir)
@@ -43,19 +50,15 @@ export function MarkdownPreview({
       const isDark = document.documentElement.classList.contains('dark')
       const themeId = 'hljs-theme'
 
-      const existingLink = document.getElementById(themeId)
-      if (existingLink) {
-        existingLink.remove()
+      const existingStyle = document.getElementById(themeId)
+      if (existingStyle) {
+        existingStyle.remove()
       }
 
-      const link = document.createElement('link')
-      link.id = themeId
-      link.rel = 'stylesheet'
-      link.href = isDark
-        ? 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/styles/github-dark.min.css'
-        : 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/styles/github.min.css'
-
-      document.head.appendChild(link)
+      const style = document.createElement('style')
+      style.id = themeId
+      style.textContent = isDark ? hljsDarkCss : hljsLightCss
+      document.head.appendChild(style)
 
       const markdownBody = document.querySelector('.markdown-body')
       if (markdownBody) {
@@ -67,6 +70,7 @@ export function MarkdownPreview({
 
     const observer = new MutationObserver(() => {
       updateTheme()
+      setIsDark(document.documentElement.classList.contains('dark'))
     })
 
     observer.observe(document.documentElement, {
@@ -86,19 +90,55 @@ export function MarkdownPreview({
   useEffect(() => {
     if (!contentRef.current) return
 
+    // テーマが変わったかを判定（変わった場合はキャッシュをスキップして全図を再レンダリング）
+    const themeChanged =
+      prevIsDarkRef.current !== null && prevIsDarkRef.current !== isDark
+    prevIsDarkRef.current = isDark
+
     // innerHTML 置き換え前に既存の Mermaid SVG をキャッシュ
     // (diagram ソースをキーにして、変更のない図は再レンダリングせず即座に復元する)
+    // テーマ変更時はキャッシュを使用しない（旧テーマの SVG を復元しないため）
     const mermaidCache = new Map<string, string>()
-    for (const el of contentRef.current.querySelectorAll<HTMLElement>(
-      '.mermaid-placeholder'
-    )) {
-      const encoded = el.getAttribute('data-diagram')
-      if (encoded && el.querySelector('svg')) {
-        mermaidCache.set(encoded, el.innerHTML)
+    if (!themeChanged) {
+      for (const el of contentRef.current.querySelectorAll<HTMLElement>(
+        '.mermaid-placeholder'
+      )) {
+        const encoded = el.getAttribute('data-diagram')
+        if (encoded && el.querySelector('svg')) {
+          mermaidCache.set(encoded, el.innerHTML)
+        }
       }
     }
 
     contentRef.current.innerHTML = html
+
+    // アセットプロトコルで画像が読み込めない場合（主にインストール済みパッケージ）に
+    // base64 データ URL に差し替えるフォールバック
+    const applyBase64Fallback = (img: HTMLImageElement) => {
+      const tauriPath = img.getAttribute('data-tauri-path')
+      if (!tauriPath) return
+      tauriApi.image
+        .getAsBase64(tauriPath)
+        .then(dataUrl => {
+          img.src = dataUrl
+        })
+        .catch(() => {
+          // 読み込み失敗は無視
+        })
+    }
+
+    for (const el of contentRef.current.querySelectorAll<HTMLImageElement>(
+      'img[data-tauri-path]'
+    )) {
+      if (el.complete && el.naturalWidth === 0) {
+        // すでに読み込み失敗している
+        applyBase64Fallback(el)
+      } else {
+        el.addEventListener('error', () => applyBase64Fallback(el), {
+          once: true,
+        })
+      }
+    }
 
     // キャッシュ済み SVG を即座に復元し、コンテンツ高さの崩壊を防ぐ
     const placeholders = contentRef.current.querySelectorAll<HTMLElement>(
@@ -118,7 +158,6 @@ export function MarkdownPreview({
     if (needsRender.length === 0) return
 
     // 新規・変更された図のみ Mermaid でレンダリング（遅延ロード）
-    const isDark = document.documentElement.classList.contains('dark')
     import('mermaid').then(({ default: mermaid }) => {
       mermaid.initialize({
         startOnLoad: false,
@@ -154,7 +193,7 @@ export function MarkdownPreview({
           })
       }
     })
-  }, [html])
+  }, [html, isDark])
 
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
     if (onScroll) {

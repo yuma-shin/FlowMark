@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { FiFolder, FiZap, FiFileText, FiHeart } from 'react-icons/fi'
+import { tauriApi as App } from '@/renderer/lib/tauriApi'
 
 interface WelcomeScreenProps {
   onSelect: (path: string) => void
@@ -13,7 +14,7 @@ export function WelcomeScreen({ onSelect }: WelcomeScreenProps) {
   const handleSelectFolder = async () => {
     setIsSelecting(true)
     try {
-      const path = await window.App.markdown.selectRootFolder()
+      const path = await App.markdown.selectRootFolder()
       if (path) {
         onSelect(path)
       }

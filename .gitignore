@@ -7,8 +7,10 @@
 /coverage
 
 # production
-/build
 /dist
+
+# Tauri build artifacts (large, auto-generated)
+src-tauri/target/
 
 # misc
 .DS_Store

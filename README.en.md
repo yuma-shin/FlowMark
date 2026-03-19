@@ -2,7 +2,7 @@
 
 [日本語版](./README.md)
 
-Notyra is a desktop Markdown editor built with Electron + React.  
+Notyra is a desktop Markdown editor built with **Tauri v2 + React**.
 It uses a local folder as the root workspace and lets you edit and preview `.md` files in a single app.
 
 ## For Users
@@ -20,6 +20,7 @@ It uses a local folder as the root workspace and lets you edit and preview `.md`
 - Auto-save with debounce
 - Auto-reload when files are changed externally
 - Open notes in a separate window
+- PDF / HTML export
 
 ### Basic Usage
 
@@ -50,20 +51,35 @@ updatedAt: 2026-02-12T00:00:00.000Z
 
 ### Tech Stack
 
-- Electron
-- React 19
-- TypeScript
-- Vite (electron-vite)
-- Tailwind CSS v4
-- CodeMirror 6
-- Vitest
-- Biome
+| Layer | Technology |
+|-------|------------|
+| UI Framework | React 19 + TypeScript |
+| Desktop Runtime | **Tauri v2** (Rust) |
+| Build | Vite 7 + Tauri CLI |
+| Styling | Tailwind CSS v4 |
+| Editor | CodeMirror 6 |
+| Testing | Vitest |
+| Linter | Biome |
 
 ### Requirements
 
+#### Running distributed binaries
+
+- OS: Windows 10/11 / macOS 12+ / Linux (Ubuntu 22.04+)
+- No Rust installation required (bundled in the binary)
+
+#### Development environment
+
 - Node.js: `22.x` (from `.nvmrc`)
 - pnpm: `10.x` (from `packageManager`)
-- Target OS: Windows / macOS (configured in `electron-builder.ts`)
+- **Rust toolchain**: Install via [rustup](https://rustup.rs/)
+  ```bash
+  curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+  ```
+- Linux only: System packages required
+  ```bash
+  sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+  ```
 
 ### Setup
 
@@ -74,36 +90,48 @@ pnpm install
 ### Development
 
 ```bash
-pnpm dev
+pnpm dev        # tauri dev (starts frontend + backend together)
 ```
 
 ### Main Commands
 
-- `pnpm dev`: Start development mode
-- `pnpm start`: Start preview mode
-- `pnpm lint`: Run lint checks
-- `pnpm lint:fix`: Run lint checks with auto-fix
-- `pnpm typecheck`: Run TypeScript type checks
-- `pnpm test`: Run tests
-- `pnpm test:watch`: Run tests in watch mode
-- `pnpm test:coverage`: Run tests with coverage
-- `pnpm prebuild`: Build app + prepare package metadata
-- `pnpm build`: Build distributable packages
-- `pnpm release`: Publish release build
-
-### Running Distributed Unsigned App
-
-See `RUN_UNSIGNED_APPS.en.md` for platform-specific instructions.
+| Command | Description |
+|---------|-------------|
+| `pnpm dev` | Start development mode (Tauri dev server) |
+| `pnpm build` | Build distributable binary (`tauri build`) |
+| `pnpm lint` | Run Biome lint checks |
+| `pnpm lint:fix` | Run lint with auto-fix |
+| `pnpm typecheck` | TypeScript type checking |
+| `pnpm test` | Run Vitest tests |
+| `pnpm test:watch` | Run Vitest in watch mode |
+| `pnpm test:coverage` | Run tests with coverage report |
 
 ### Project Structure (Excerpt)
 
 ```text
+src-tauri/          # Tauri / Rust backend
+  src/
+    commands/       # Tauri commands (markdown, image, export, window)
+    lib.rs          # App entry point & plugin registration
+    state.rs        # Shared state (file watchers, etc.)
+  tauri.conf.json   # Window config, CSP, build settings
+  Cargo.toml        # Rust dependencies
+
 src/
-  main/       # Electron main process
-  preload/    # contextBridge API
-  renderer/   # React UI
-  shared/     # Shared types/constants
+  renderer/         # React UI (frontend)
+    lib/
+      tauriApi.ts   # Tauri invoke wrapper (IPC adapter)
+      windowState.ts # Window state persistence
+    hooks/          # Custom hooks
+    components/     # UI components
+    screens/        # Screen components (main, editor)
+    plugins/        # rehype plugins
+  shared/           # Shared type definitions
 ```
+
+### Running Distributed Unsigned App
+
+See `RUN_UNSIGNED_APPS.en.md` for platform-specific instructions.
 
 ## Contribution
 
@@ -111,5 +139,5 @@ If you find a bug in the source code, it would help a lot if you could create an
 It would help even more if you fix the bug and submit a pull request.
 
 ## License
-MIT. See `LICENSE.md`.
 
+MIT. See `LICENSE.md`.

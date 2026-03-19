@@ -90,7 +90,7 @@ export function TagListSection({
               size={24}
             />
             <p className="text-xs text-muted-foreground">
-              {t('noteList.empty')}
+              {t('metadata.noTags')}
             </p>
           </div>
         ) : (

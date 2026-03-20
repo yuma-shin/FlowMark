@@ -1,3 +1,5 @@
+#[cfg(target_os = "macos")]
+use tauri::TitleBarStyle;
 use tauri::{command, AppHandle, Manager, WebviewUrl, WebviewWindowBuilder};
 
 #[command]
@@ -30,12 +32,23 @@ pub async fn open_note_window(app: AppHandle, note_path: String) -> Result<bool,
         WebviewUrl::App(format!("index.html#/editor?note={}", encoded).into())
     };
 
-    WebviewWindowBuilder::new(&app, &label, url)
+    #[allow(unused_mut)]
+    let mut builder = WebviewWindowBuilder::new(&app, &label, url)
         .title("Notyra — Editor")
-        .decorations(false)
         .inner_size(1200.0, 800.0)
         .min_inner_size(600.0, 400.0)
-        .center()
+        .center();
+
+    #[cfg(target_os = "macos")]
+    {
+        builder = builder.title_bar_style(TitleBarStyle::Overlay);
+    }
+    #[cfg(not(target_os = "macos"))]
+    {
+        builder = builder.decorations(false);
+    }
+
+    builder
         .build()
         .map(|_| true)
         .map_err(|e| e.to_string())

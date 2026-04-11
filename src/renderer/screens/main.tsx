@@ -39,6 +39,7 @@ export function MainScreen() {
   )
   const [noteContent, setNoteContent] = useState<string>('')
   const [isSaving, setIsSaving] = useState(false)
+  const [saveError, setSaveError] = useState<string | null>(null)
   const [showSidebar, setShowSidebar] = useState(settings.showSidebar ?? true)
   const [showNoteList, setShowNoteList] = useState(
     settings.showNoteList ?? true
@@ -533,6 +534,7 @@ export function MainScreen() {
                   )
                   lastSaveTimeRef.current = Date.now()
                   lastLocalWriteTimeRef.current = Date.now()
+                  setSaveError(null)
                   setIsSaving(false)
                   saveTimeoutRef.current = undefined
 
@@ -546,8 +548,11 @@ export function MainScreen() {
           await App.markdown.saveNote(selectedNote.filePath, content)
           lastSaveTimeRef.current = Date.now()
           lastLocalWriteTimeRef.current = Date.now()
+          setSaveError(null)
         } catch (error) {
-          console.error('Failed to save note:', error)
+          const msg = error instanceof Error ? error.message : String(error)
+          console.error('Failed to save note:', msg)
+          setSaveError(msg)
         } finally {
           setIsSaving(false)
           saveTimeoutRef.current = undefined
@@ -1062,9 +1067,11 @@ export function MainScreen() {
                 onLayoutModeChange={handleLayoutModeChange}
                 onMetadataChange={handleMetadataChange}
                 onNoteMove={handleNoteMove}
+                onSaveErrorDismiss={() => setSaveError(null)}
                 onToggleNoteList={toggleNoteList}
                 onToggleSidebar={toggleSidebar}
                 rootDir={settings.rootDir}
+                saveError={saveError}
                 showNoteList={showNoteList}
                 showSidebar={showSidebar}
               />

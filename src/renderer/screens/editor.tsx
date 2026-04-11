@@ -12,6 +12,7 @@ export function EditorScreen() {
   const [searchParams] = useSearchParams()
   const [note, setNote] = useState<MarkdownNoteMeta | null>(null)
   const [noteContent, setNoteContent] = useState<string>('')
+  const [saveError, setSaveError] = useState<string | null>(null)
   const [layoutMode, setLayoutMode] = useState<'editor' | 'preview' | 'split'>(
     'split'
   )
@@ -140,8 +141,11 @@ export function EditorScreen() {
         await App.markdown.saveNote(note.filePath, content)
         lastSaveTimeRef.current = Date.now()
         lastLocalWriteTimeRef.current = Date.now()
+        setSaveError(null)
       } catch (error) {
-        console.error('Failed to save note:', error)
+        const msg = error instanceof Error ? error.message : String(error)
+        console.error('Failed to save note:', msg)
+        setSaveError(msg)
       }
     }, 1000)
   }
@@ -177,7 +181,9 @@ export function EditorScreen() {
           noteMeta={note}
           onChange={handleContentChange}
           onLayoutModeChange={setLayoutMode}
+          onSaveErrorDismiss={() => setSaveError(null)}
           rootDir={settings.rootDir}
+          saveError={saveError}
         />
       </div>
     </div>

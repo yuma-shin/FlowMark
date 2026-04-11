@@ -26,8 +26,9 @@ jobs:
           VERSION=${BRANCH#release/}
           echo "version=$VERSION" >> $GITHUB_OUTPUT
 
-      # mainへのPRを作成してマージ（PATを使用）
-      - name: Create and merge PR to main
+      # mainへのPR作成
+      - name: Create PR to main
+        id: create_pr
         env:
           GH_TOKEN: ${{ secrets.RELEASE_PAT }}
         run: |
@@ -36,7 +37,18 @@ jobs:
             --head release/${{ steps.version.outputs.version }} \
             --title "Release ${{ steps.version.outputs.version }}" \
             --body "Automated release PR")
-          gh pr merge $PR_URL --merge --admin
+          echo "pr_url=$PR_URL" >> $GITHUB_OUTPUT
+
+      # PR反映待機
+      - name: Wait for PR to be ready
+        run: sleep 30
+
+      # mainへのPRをマージ
+      - name: Merge PR to main
+        env:
+          GH_TOKEN: ${{ secrets.RELEASE_PAT }}
+        run: |
+          gh pr merge ${{ steps.create_pr.outputs.pr_url }} --merge --admin
 
       # mainにタグを付与
       - name: Create tag

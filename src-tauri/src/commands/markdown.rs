@@ -52,6 +52,95 @@ pub struct ScanResult {
 }
 
 // ---------------------------------------------------------------------------
+// アトミック書き込みユーティリティ
+// ---------------------------------------------------------------------------
+
+const MAX_RETRIES: u32 = 3;
+const RETRY_DELAY_MS: u64 = 200;
+
+/// 対象ファイルと同じディレクトリに一時ファイルパスを生成する
+/// 例: /path/to/notes/foo.md → /path/to/notes/.foo.md.notyra_tmp
+fn temp_path_for(target: &Path) -> PathBuf {
+    let file_name = target
+        .file_name()
+        .map(|n| format!(".{}.notyra_tmp", n.to_string_lossy()))
+        .unwrap_or_else(|| ".notyra_tmp".to_string());
+    target.with_file_name(file_name)
+}
+
+/// OS エラーコードがリトライ可能かどうかを判定する
+/// - 1224: ERROR_USER_MAPPED_FILE（同期エージェントがメモリマップ中）
+/// - 32:   ERROR_SHARING_VIOLATION（共有違反）
+/// - 5:    ERROR_ACCESS_DENIED（一時的なロック）
+fn is_retryable(e: &std::io::Error) -> bool {
+    matches!(e.raw_os_error(), Some(1224) | Some(32) | Some(5))
+        || e.kind() == std::io::ErrorKind::PermissionDenied
+}
+
+/// アトミックな書き込みを実行する。
+/// 対象ファイルと同じディレクトリに一時ファイルを作成し、
+/// rename でアトミックに差し替える。rename が一時的なロックエラーで
+/// 失敗した場合は最大 MAX_RETRIES 回リトライする。
+///
+/// Preconditions:
+///   - path の親ディレクトリが存在すること
+///   - bytes は完全な書き込みコンテンツであること
+///
+/// Postconditions:
+///   - Ok(()) の場合、path のコンテンツが bytes と一致する
+///   - Ok(()) の場合、一時ファイルは存在しない
+///   - Err の場合、path の元コンテンツは変更されていない
+///   - Err の場合、一時ファイルの削除を試みている（ベストエフォート）
+///
+/// Invariants:
+///   - 一時ファイルは必ず path の親ディレクトリに作成する
+async fn atomic_write(path: &Path, bytes: &[u8]) -> Result<(), String> {
+    let tmp = temp_path_for(path);
+
+    // 一時ファイルへ書き込む
+    if let Err(e) = tokio::fs::write(&tmp, bytes).await {
+        let _ = tokio::fs::remove_file(&tmp).await;
+        return Err(format!(
+            "一時ファイルへの書き込みに失敗しました: {}  ファイル: {}  (os error: {:?})",
+            e,
+            path.display(),
+            e.raw_os_error()
+        ));
+    }
+
+    // rename でアトミックに差し替え（リトライ付き）
+    let mut retries = 0u32;
+    loop {
+        match tokio::fs::rename(&tmp, path).await {
+            Ok(()) => return Ok(()),
+            Err(e) if is_retryable(&e) && retries < MAX_RETRIES => {
+                retries += 1;
+                eprintln!(
+                    "[notyra] 保存リトライ ({}/{}): {}  os error: {:?}",
+                    retries,
+                    MAX_RETRIES,
+                    path.display(),
+                    e.raw_os_error()
+                );
+                tokio::time::sleep(std::time::Duration::from_millis(RETRY_DELAY_MS)).await;
+            }
+            Err(e) => {
+                let _ = tokio::fs::remove_file(&tmp).await;
+                let msg = format!(
+                    "保存に失敗しました (リトライ回数: {}/{}): {}  ファイル: {}",
+                    retries,
+                    MAX_RETRIES,
+                    e,
+                    path.display()
+                );
+                eprintln!("[notyra] {}", msg);
+                return Err(msg);
+            }
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------
 // ユーティリティ
 // ---------------------------------------------------------------------------
 
@@ -338,10 +427,9 @@ pub async fn save_note(
         content
     };
 
-    tokio::fs::write(&file_path, file_content.as_bytes())
+    atomic_write(Path::new(&file_path), file_content.as_bytes())
         .await
         .map(|_| true)
-        .map_err(|e| e.to_string())
 }
 
 fn serde_yaml_from_value(v: &serde_json::Value) -> String {
@@ -402,9 +490,7 @@ pub async fn create_note(
         title, now, now, title
     );
 
-    tokio::fs::write(&file_path, content.as_bytes())
-        .await
-        .map_err(|e| e.to_string())?;
+    atomic_write(&file_path, content.as_bytes()).await?;
 
     Ok(Some(file_path.to_string_lossy().replace('\\', "/").to_string()))
 }
@@ -424,9 +510,7 @@ pub async fn rename_note(old_path: String, new_title: String) -> Result<Option<S
     // フロントマターの title と updatedAt を更新
     let new_content = update_front_matter(&raw, &parsed.content, &new_title, &now);
 
-    tokio::fs::write(&new_path, new_content.as_bytes())
-        .await
-        .map_err(|e| e.to_string())?;
+    atomic_write(&new_path, new_content.as_bytes()).await?;
 
     if old_path != new_path.to_string_lossy() {
         tokio::fs::remove_file(old).await.map_err(|e| e.to_string())?;
@@ -627,6 +711,107 @@ fn epoch_to_ymd_hms(epoch: u64) -> (u64, u64, u64, u64, u64, u64) {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    // -----------------------------------------------------------------------
+    // atomic_write ユーティリティのテスト
+    // -----------------------------------------------------------------------
+
+    #[test]
+    fn test_temp_path_for_standard() {
+        let target = Path::new("/path/to/notes/foo.md");
+        let tmp = temp_path_for(target);
+        assert_eq!(tmp, Path::new("/path/to/notes/.foo.md.notyra_tmp"));
+    }
+
+    #[test]
+    fn test_temp_path_for_nested() {
+        let target = Path::new("/a/b/c/note.md");
+        let tmp = temp_path_for(target);
+        assert_eq!(tmp, Path::new("/a/b/c/.note.md.notyra_tmp"));
+    }
+
+    #[test]
+    fn test_is_retryable_error_1224() {
+        let e = std::io::Error::from_raw_os_error(1224);
+        assert!(is_retryable(&e), "error 1224 (ERROR_USER_MAPPED_FILE) はリトライ可能");
+    }
+
+    #[test]
+    fn test_is_retryable_error_32() {
+        let e = std::io::Error::from_raw_os_error(32);
+        assert!(is_retryable(&e), "error 32 (ERROR_SHARING_VIOLATION) はリトライ可能");
+    }
+
+    #[test]
+    fn test_is_retryable_error_5() {
+        let e = std::io::Error::from_raw_os_error(5);
+        assert!(is_retryable(&e), "error 5 (ERROR_ACCESS_DENIED) はリトライ可能");
+    }
+
+    #[test]
+    fn test_is_retryable_permission_denied() {
+        let e = std::io::Error::new(std::io::ErrorKind::PermissionDenied, "permission denied");
+        assert!(is_retryable(&e), "PermissionDenied はリトライ可能");
+    }
+
+    #[test]
+    fn test_is_retryable_not_found_is_false() {
+        let e = std::io::Error::from_raw_os_error(2); // ERROR_FILE_NOT_FOUND
+        assert!(!is_retryable(&e), "error 2 (NOT FOUND) はリトライ不可");
+    }
+
+    #[test]
+    fn test_is_retryable_other_error_is_false() {
+        let e = std::io::Error::new(std::io::ErrorKind::NotFound, "not found");
+        assert!(!is_retryable(&e), "NotFound はリトライ不可");
+    }
+
+    #[tokio::test]
+    async fn test_atomic_write_success_no_temp_file() {
+        let dir = std::env::temp_dir().join(format!("notyra_test_{}", std::process::id()));
+        tokio::fs::create_dir_all(&dir).await.unwrap();
+
+        let target = dir.join("test_atomic.md");
+        let bytes = b"hello atomic world";
+
+        atomic_write(&target, bytes).await.expect("atomic_write should succeed");
+
+        // ターゲットファイルの内容が正しいことを確認
+        let written = tokio::fs::read(&target).await.unwrap();
+        assert_eq!(written, bytes);
+
+        // 一時ファイルが残存していないことを確認
+        let tmp = temp_path_for(&target);
+        assert!(!tmp.exists(), "一時ファイルが残存していてはならない");
+
+        tokio::fs::remove_dir_all(&dir).await.ok();
+    }
+
+    #[tokio::test]
+    async fn test_atomic_write_write_failure_does_not_touch_original() {
+        let dir = std::env::temp_dir().join(format!("notyra_test2_{}", std::process::id()));
+        tokio::fs::create_dir_all(&dir).await.unwrap();
+
+        // 既存の元ファイルを作成しておく
+        let target = dir.join("original.md");
+        let original_bytes = b"original content";
+        tokio::fs::write(&target, original_bytes).await.unwrap();
+
+        // 存在しない親ディレクトリへの書き込みはエラーになる
+        let bad_target = dir.join("nonexistent_subdir").join("fail.md");
+        let result = atomic_write(&bad_target, b"new content").await;
+        assert!(result.is_err(), "存在しないパスへの書き込みは失敗するべき");
+
+        // 元ファイルは変更されていないことを確認
+        let after = tokio::fs::read(&target).await.unwrap();
+        assert_eq!(after, original_bytes, "元ファイルの内容は変更されていてはならない");
+
+        tokio::fs::remove_dir_all(&dir).await.ok();
+    }
+
+    // -----------------------------------------------------------------------
+    // 既存のテスト
+    // -----------------------------------------------------------------------
 
     #[test]
     fn test_sanitize_filename() {

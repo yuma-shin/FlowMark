@@ -481,7 +481,7 @@ export function FolderTree({
           )}
           <div className="flex items-center gap-1 text-xs text-gray-600 dark:text-gray-400 min-w-0 flex-1">
             {breadcrumbs.map((crumb, index) => (
-              <React.Fragment key={`${crumb.path}-${index}`}>
+              <React.Fragment key={crumb.path}>
                 {index > 0 && (
                   <span className="text-gray-400 dark:text-gray-600 flex-shrink-0">
                     /

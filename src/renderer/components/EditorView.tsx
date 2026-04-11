@@ -81,6 +81,8 @@ interface EditorViewProps {
   folderTree?: FolderNode
   currentFolder?: string
   isSaving?: boolean
+  saveError?: string | null
+  onSaveErrorDismiss?: () => void
   rootDir?: string
   allNotes?: MarkdownNoteMeta[]
 }
@@ -101,6 +103,8 @@ export function EditorView({
   folderTree,
   currentFolder,
   isSaving = false,
+  saveError = null,
+  onSaveErrorDismiss,
   rootDir,
   allNotes,
 }: EditorViewProps) {
@@ -306,6 +310,20 @@ export function EditorView({
                 'linear-gradient(to right, var(--theme-gradient-from), var(--theme-gradient-to), var(--theme-gradient-from))',
             }}
           ></div>
+        </div>
+      )}
+
+      {/* 保存エラーバナー */}
+      {saveError && (
+        <div className="absolute top-0 left-0 right-0 z-50 flex items-center gap-2 px-3 py-1.5 bg-red-50 dark:bg-red-950 border-b border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 text-xs">
+          <span className="flex-1 truncate">{saveError}</span>
+          <button
+            className="shrink-0 rounded px-1.5 py-0.5 hover:bg-red-100 dark:hover:bg-red-900 transition-colors"
+            onClick={onSaveErrorDismiss}
+            type="button"
+          >
+            閉じる
+          </button>
         </div>
       )}
 

@@ -1,0 +1,54 @@
+name: Release Flow
+
+on:
+  push:
+    branches:
+      - 'release/**'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ssh-key: ${{ secrets.DEPLOY_KEY }}
+
+      # ブランチ名からバージョンを抽出 (release/1.2.3 → 1.2.3)
+      - name: Extract version
+        id: version
+        run: |
+          BRANCH=${GITHUB_REF#refs/heads/}
+          VERSION=${BRANCH#release/}
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      # mainへのPRを作成してマージ
+      - name: Create and merge PR to main
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          PR_URL=$(gh pr create \
+            --base main \
+            --head release/${{ steps.version.outputs.version }} \
+            --title "Release ${{ steps.version.outputs.version }}" \
+            --body "Automated release PR")
+          gh pr merge $PR_URL --merge --admin
+
+      # mainにタグを付与
+      - name: Create tag
+        run: |
+          git fetch origin main
+          git tag ${{ steps.version.outputs.version }} origin/main
+          git push origin ${{ steps.version.outputs.version }}
+
+      # developへ直接マージ
+      - name: Merge to develop
+        run: |
+          git fetch origin develop
+          git checkout develop
+          git merge origin/release/${{ steps.version.outputs.version }} --no-ff
+          git push origin develop

@@ -18,6 +18,12 @@ jobs:
           fetch-depth: 0
           ssh-key: ${{ secrets.DEPLOY_KEY }}
 
+      # Gitユーザー設定
+      - name: Configure git
+        run: |
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
+
       # release/v1.2.3 → v1.2.3 を抽出
       - name: Extract version
         id: version
@@ -41,7 +47,7 @@ jobs:
 
       # PR反映待機
       - name: Wait for PR to be ready
-        run: sleep 30
+        run: sleep 10
 
       # mainへのPRをマージ
       - name: Merge PR to main

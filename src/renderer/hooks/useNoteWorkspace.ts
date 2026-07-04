@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from 'react'
 import { useApp } from '../contexts/AppContext'
 import { tauriApi as App } from '@/renderer/lib/tauriApi'
+import { stripFrontMatter } from '@/renderer/utils/frontMatter'
 import type { MarkdownNoteMeta, FolderNode, AppSettings } from '@/shared/types'
 
 const EXTERNAL_CHANGE_COOLDOWN_MS = 5000
@@ -707,7 +708,7 @@ export function useNoteWorkspace(): UseNoteWorkspaceResult {
         const endIndex = noteContent.indexOf('\n---\n', 4)
         if (endIndex !== -1) {
           const frontmatterText = noteContent.substring(4, endIndex)
-          content = noteContent.substring(endIndex + 5)
+          content = stripFrontMatter(noteContent)
 
           // 簡易的なYAMLパース
           frontmatterText.split('\n').forEach(line => {

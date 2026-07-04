@@ -2,8 +2,15 @@ import { useEffect, useState, useRef } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { CustomTitleBar } from '../components/CustomTitleBar'
 import { EditorView } from '../components/EditorView'
+import { StatusBar } from '../components/StatusBar'
 import { useApp } from '../contexts/AppContext'
+import { useEditorStatus } from '@/renderer/hooks/useEditorStatus'
+import { useAppVersion } from '@/renderer/hooks/useAppVersion'
 import type { MarkdownNoteMeta } from '@/shared/types'
+import type {
+  EditorCursorPosition,
+  SelectionStats,
+} from '@/renderer/lib/codemirror/editorStatus'
 import { tauriApi as App } from '@/renderer/lib/tauriApi'
 
 const EXTERNAL_CHANGE_COOLDOWN_MS = 5000
@@ -22,6 +29,18 @@ export function EditorScreen() {
   const lastLocalWriteTimeRef = useRef<number>(0)
   const reloadTimeoutRef = useRef<number | undefined>(undefined)
   const { settings } = useApp()
+  const editorStats = useEditorStatus(noteContent)
+  const version = useAppVersion()
+  const [cursor, setCursor] = useState<EditorCursorPosition | null>(null)
+  const [selectionStats, setSelectionStats] = useState<SelectionStats | null>(
+    null
+  )
+
+  // ノート切り替え時に前ノートのカーソル/選択状態をリセットする
+  useEffect(() => {
+    setCursor(null)
+    setSelectionStats(null)
+  }, [note?.filePath])
 
   // テーマをドキュメントに適用
   useEffect(() => {
@@ -180,12 +199,20 @@ export function EditorScreen() {
           layoutMode={layoutMode}
           noteMeta={note}
           onChange={handleContentChange}
+          onCursorChange={setCursor}
           onLayoutModeChange={setLayoutMode}
           onSaveErrorDismiss={() => setSaveError(null)}
+          onSelectionStatsChange={setSelectionStats}
           rootDir={settings.rootDir}
           saveError={saveError}
         />
       </div>
+      <StatusBar
+        cursor={cursor}
+        selectionStats={selectionStats}
+        stats={editorStats}
+        version={version}
+      />
     </div>
   )
 }

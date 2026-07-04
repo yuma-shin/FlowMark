@@ -20,6 +20,11 @@ import { useSplitView } from '@/renderer/hooks/useSplitView'
 import { useImageInsertion } from '@/renderer/hooks/useImageInsertion'
 import { usePdfExport } from '@/renderer/hooks/usePdfExport'
 import { createBlockquoteDecorationExtension } from '@/renderer/lib/codemirror/blockquoteDecoration'
+import {
+  createEditorStatusListener,
+  type EditorCursorPosition,
+  type SelectionStats,
+} from '@/renderer/lib/codemirror/editorStatus'
 import type { AppSettings, MarkdownNoteMeta, FolderNode } from '@/shared/types'
 
 const lineWrapping = CodemirrorEditorView.lineWrapping
@@ -88,6 +93,8 @@ interface EditorViewProps {
   onSaveErrorDismiss?: () => void
   rootDir?: string
   allNotes?: MarkdownNoteMeta[]
+  onCursorChange?: (position: EditorCursorPosition | null) => void
+  onSelectionStatsChange?: (stats: SelectionStats | null) => void
 }
 
 export function EditorView({
@@ -110,6 +117,8 @@ export function EditorView({
   onSaveErrorDismiss,
   rootDir,
   allNotes,
+  onCursorChange,
+  onSelectionStatsChange,
 }: EditorViewProps) {
   const allTags = useMemo(() => {
     if (!allNotes) return []
@@ -193,6 +202,15 @@ export function EditorView({
     isHtmlExporting,
   } = usePdfExport()
 
+  const editorStatusListener = useMemo(
+    () =>
+      createEditorStatusListener((cursor, selection) => {
+        onCursorChange?.(cursor)
+        onSelectionStatsChange?.(selection)
+      }),
+    [onCursorChange, onSelectionStatsChange]
+  )
+
   const extensions = useMemo(
     () => [
       markdown({ codeLanguages: languages }),
@@ -201,8 +219,14 @@ export function EditorView({
       imageHandlerExtension,
       alertExtension,
       blockquoteDecorationExtension,
+      editorStatusListener,
     ],
-    [imageHandlerExtension, alertExtension, blockquoteDecorationExtension]
+    [
+      imageHandlerExtension,
+      alertExtension,
+      blockquoteDecorationExtension,
+      editorStatusListener,
+    ]
   )
 
   const handleExportPdf = async () => {
@@ -218,6 +242,15 @@ export function EditorView({
   useEffect(() => {
     setLocalContent(content)
   }, [content])
+
+  // previewモード（CodeMirror非表示）へ切り替わった際はカーソル/選択の通知をクリアする
+  useEffect(() => {
+    if (layoutMode === 'preview') {
+      onCursorChange?.(null)
+      onSelectionStatsChange?.(null)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [layoutMode])
 
   // テーマ変更を監視
   useEffect(() => {

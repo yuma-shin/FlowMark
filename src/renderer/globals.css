@@ -826,6 +826,75 @@ pre,
   color: #f85149;
 }
 
+/* ネストアラートのタイトル色修正
+ * github-markdown-light/dark.css は子孫セレクタ (specificity 0,4,0) を使うため、
+ * 外側アラートのCSSが内側アラートのタイトル色を上書きしてしまう。
+ * data-color-mode 属性スコープ付きの高 specificity (0,6,0) で正しい色を保持する。
+ * 色値は github-markdown-light.css / github-markdown-dark.css のハードコード値に準拠。
+ */
+
+/* ライトモード: github-markdown-light.css の値 */
+.markdown-body[data-color-mode="light"] .markdown-alert
+  .markdown-alert.markdown-alert-note
+  .markdown-alert-title {
+  color: #0969da;
+}
+.markdown-body[data-color-mode="light"]
+  .markdown-alert
+  .markdown-alert.markdown-alert-tip
+  .markdown-alert-title {
+  color: #1a7f37;
+}
+.markdown-body[data-color-mode="light"]
+  .markdown-alert
+  .markdown-alert.markdown-alert-important
+  .markdown-alert-title {
+  color: #8250df;
+}
+.markdown-body[data-color-mode="light"]
+  .markdown-alert
+  .markdown-alert.markdown-alert-warning
+  .markdown-alert-title {
+  color: #9a6700;
+}
+.markdown-body[data-color-mode="light"]
+  .markdown-alert
+  .markdown-alert.markdown-alert-caution
+  .markdown-alert-title {
+  color: #d1242f;
+}
+
+/* ダークモード: github-markdown-dark.css の値 */
+.markdown-body[data-color-mode="dark"] .markdown-alert
+  .markdown-alert.markdown-alert-note
+  .markdown-alert-title {
+  color: #4493f8;
+}
+.markdown-body[data-color-mode="dark"]
+  .markdown-alert
+  .markdown-alert.markdown-alert-tip
+  .markdown-alert-title {
+  color: #3fb950;
+}
+.markdown-body[data-color-mode="dark"]
+  .markdown-alert
+  .markdown-alert.markdown-alert-important
+  .markdown-alert-title {
+  color: #ab7df8;
+}
+.markdown-body[data-color-mode="dark"]
+  .markdown-alert
+  .markdown-alert.markdown-alert-warning
+  .markdown-alert-title {
+  color: #d29922;
+}
+.markdown-body[data-color-mode="dark"]
+  .markdown-alert
+  .markdown-alert.markdown-alert-caution
+  .markdown-alert-title {
+  color: #f85149;
+}
+
 /* Custom title bar drag region */
 .drag-region {
   -webkit-app-region: drag;

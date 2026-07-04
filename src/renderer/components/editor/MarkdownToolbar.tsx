@@ -22,6 +22,7 @@ import {
   GoTable,
 } from 'react-icons/go'
 import { SimpleTooltip } from './Tooltip'
+import { ALERT_OPTIONS } from '@/renderer/lib/alertOptions'
 
 type ListType = 'bullet' | 'ordered'
 
@@ -420,21 +421,9 @@ interface AlertPaletteProps {
 }
 
 function AlertPalette({ onApplyAlert }: AlertPaletteProps) {
-  const alerts = [
-    { type: 'NOTE' as const, label: '📘 Note', color: 'bg-blue-500' },
-    { type: 'TIP' as const, label: '💡 Tip', color: 'bg-green-500' },
-    {
-      type: 'IMPORTANT' as const,
-      label: '⚠️ Important',
-      color: 'bg-purple-500',
-    },
-    { type: 'WARNING' as const, label: '⚡ Warning', color: 'bg-yellow-500' },
-    { type: 'CAUTION' as const, label: '🚨 Caution', color: 'bg-red-500' },
-  ]
-
   return (
     <div className="absolute right-0 top-full mt-1 bg-popover shadow-xl rounded-lg border border-border p-2 flex flex-col gap-2 z-50 min-w-[140px]">
-      {alerts.map(({ type, label, color }) => (
+      {ALERT_OPTIONS.map(({ type, label, color }) => (
         <button
           className={`px-3 py-2 text-sm font-medium rounded-md hover:scale-105 transition-transform ${color} text-white`}
           key={type}

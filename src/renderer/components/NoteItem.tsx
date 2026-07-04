@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next'
-import { FiTrash2, FiTag, FiClock } from 'react-icons/fi'
-import { SimpleTooltip } from './editor/Tooltip'
+import { FiTrash2 } from 'react-icons/fi'
+import { SimpleTooltip } from './ui/tooltip'
 import type { MarkdownNoteMeta } from '@/shared/types'
 
 interface NoteItemProps {
@@ -35,73 +35,66 @@ export function NoteItem({
 
   return (
     <div
-      className={`relative transition-all duration-200 group border-b border-gray-200 dark:border-gray-700 ${
-        isSelected ? 'shadow-sm' : 'hover:bg-gray-100 dark:hover:bg-gray-800/50'
-      }`}
-      style={
-        isSelected ? { background: 'var(--theme-accent-subtle)' } : undefined
-      }
+      className="sidebar-item group relative mx-1 my-0.5 overflow-hidden"
+      data-active={isSelected}
     >
       <button
-        className="w-full cursor-pointer text-left p-2.5"
+        className="w-full cursor-pointer text-left px-2.5 py-2"
         onClick={onSelect}
         onDoubleClick={onDoubleClick}
         type="button"
       >
-        <div className="mb-1 flex items-center gap-2 pr-7">
-          <h3 className="flex-1 line-clamp-1 text-sm font-semibold text-gray-800 dark:text-gray-100">
+        <div className="flex items-center gap-2">
+          <h3 className="flex-1 line-clamp-1 text-sm font-semibold text-foreground">
             {note.title}
           </h3>
+          {note.updatedAt && (
+            <span className="flex-shrink-0 text-xs text-muted-foreground">
+              {formatDate(note.updatedAt)}
+            </span>
+          )}
         </div>
         {note.excerpt && (
-          <p className="mb-1 line-clamp-1 text-xs text-gray-500 dark:text-gray-400">
+          <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">
             {note.excerpt}
           </p>
         )}
-        <div className="flex flex-wrap items-center gap-2">
-          {note.tags && note.tags.length > 0 && (
-            <div className="flex items-center gap-1">
-              <FiTag size={12} style={{ color: 'var(--theme-accent)' }} />
-              <div className="flex gap-1">
-                {note.tags.slice(0, 3).map(tag => (
-                  <span
-                    className="rounded px-1.5 py-0.5 text-xs"
-                    key={tag}
-                    style={{
-                      background: 'var(--theme-accent-subtle)',
-                      color: 'var(--theme-accent)',
-                    }}
-                  >
-                    {tag}
-                  </span>
-                ))}
-                {note.tags.length > 3 && (
-                  <span className="rounded bg-gray-100 px-1.5 py-0.5 text-xs text-gray-500 dark:bg-gray-800 dark:text-gray-400">
-                    +{note.tags.length - 3}
-                  </span>
-                )}
-              </div>
-            </div>
-          )}
-          {note.updatedAt && (
-            <div className="ml-auto flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
-              <FiClock size={12} />
-              <span>{formatDate(note.updatedAt)}</span>
-            </div>
-          )}
-        </div>
+        {note.tags && note.tags.length > 0 && (
+          <div className="mt-1 flex gap-1">
+            {note.tags.slice(0, 3).map(tag => (
+              <span
+                className="rounded px-1.5 py-0.5 text-xs"
+                key={tag}
+                style={{
+                  background: 'var(--theme-accent-subtle)',
+                  color: 'var(--theme-accent)',
+                }}
+              >
+                {tag}
+              </span>
+            ))}
+            {note.tags.length > 3 && (
+              <span className="rounded bg-muted px-1.5 py-0.5 text-xs text-muted-foreground">
+                +{note.tags.length - 3}
+              </span>
+            )}
+          </div>
+        )}
       </button>
       {onDelete && (
-        <SimpleTooltip content={t('noteItem.delete')} placement="top">
-          <button
-            aria-label={t('noteItem.delete')}
-            className="absolute right-2 top-2 opacity-0 group-hover:opacity-100 p-0.5 hover:bg-red-100 dark:hover:bg-red-900/30 rounded text-red-600 dark:text-red-400"
-            onClick={onDelete}
-            type="button"
-          >
-            <FiTrash2 size={14} />
-          </button>
-        </SimpleTooltip>
+        <div className="absolute inset-y-0 right-0 flex w-10 items-center justify-center opacity-0 transition-opacity duration-150 group-hover:opacity-100">
+          <div className="absolute inset-0 bg-destructive/10" />
+          <SimpleTooltip content={t('noteItem.delete')} placement="top">
+            <button
+              aria-label={t('noteItem.delete')}
+              className="absolute inset-0 flex items-center justify-center text-destructive transition-colors duration-150 hover:bg-destructive hover:text-white"
+              onClick={onDelete}
+              type="button"
+            >
+              <FiTrash2 size={16} />
+            </button>
+          </SimpleTooltip>
+        </div>
       )}
     </div>
   )

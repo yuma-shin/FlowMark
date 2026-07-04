@@ -66,6 +66,20 @@ describe('AppContext', () => {
       expect(result.current.settings.theme).toBe('system')
       consoleSpy.mockRestore()
     })
+
+    it('sidebarWidth/noteListWidth 未設定の既存設定でも問題なく読み込める', () => {
+      localStorage.setItem(
+        'appSettings',
+        JSON.stringify({ theme: 'dark', rootDir: '/notes' }),
+      )
+
+      const { result } = renderHook(() => useApp(), { wrapper })
+
+      expect(result.current.settings.theme).toBe('dark')
+      expect(result.current.settings.rootDir).toBe('/notes')
+      expect(result.current.settings.sidebarWidth).toBeUndefined()
+      expect(result.current.settings.noteListWidth).toBeUndefined()
+    })
   })
 
   describe('updateSettings', () => {

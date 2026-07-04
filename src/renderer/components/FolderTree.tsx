@@ -18,7 +18,8 @@ import {
   useInteractions,
   FloatingPortal,
 } from '@floating-ui/react'
-import { SimpleTooltip } from './editor/Tooltip'
+import { SimpleTooltip } from './ui/tooltip'
+import { Button } from './ui/button'
 import type { FolderNode, MarkdownNoteMeta } from '@/shared/types'
 import { TagListSection } from './TagListSection'
 
@@ -35,6 +36,8 @@ interface FolderTreeProps {
   filteredNotes?: MarkdownNoteMeta[]
   selectedTag?: string | null
   onSelectTag?: (tag: string | null) => void
+  /** 指定時はpxで幅を固定する（未指定時は既存の固定幅クラスを使用） */
+  width?: number
 }
 
 interface FolderItemProps {
@@ -98,13 +101,10 @@ function FolderItem({
   return (
     <div>
       <div
-        className={`flex items-center gap-2 px-3 py-2.5 cursor-pointer transition-all duration-200 border-l-4 group ${
-          isSelected
-            ? 'font-semibold shadow-sm'
-            : isMenuOpen
-              ? 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 border-gray-400 dark:border-gray-500'
-              : 'hover:bg-gray-100 dark:hover:bg-gray-800/50 text-gray-700 dark:text-gray-300 border-transparent'
+        className={`sidebar-item flex items-center gap-2 mx-2 px-2 py-2 cursor-pointer text-foreground ${
+          isSelected ? 'font-semibold' : ''
         }`}
+        data-active={isSelected || isMenuOpen}
         onClick={() => onSelectFolder(node.relativePath)}
         onContextMenu={handleContextMenu}
         onDoubleClick={() =>
@@ -116,35 +116,17 @@ function FolderItem({
           }
         }}
         role="treeitem"
-        style={{
-          paddingLeft: `${depth * 20 + 16}px`,
-          ...(isSelected
-            ? {
-                background: 'var(--theme-accent-subtle)',
-                color: 'var(--theme-accent)',
-                borderLeftColor: 'var(--theme-accent)',
-              }
-            : {}),
-        }}
+        style={{ paddingLeft: `${depth * 20 + 8}px` }}
         tabIndex={0}
       >
         <div className="w-5 flex-shrink-0 flex items-center justify-center">
           {hasChildren && (
             <button
-              className="text-gray-500 dark:text-gray-400 transition-colors"
+              className="text-muted-foreground hover:text-foreground transition-colors"
               onClick={e => {
                 e.stopPropagation()
                 onToggleExpand()
               }}
-              onMouseEnter={e => {
-                e.currentTarget.style.color = 'var(--theme-accent)'
-              }}
-              onMouseLeave={e => {
-                e.currentTarget.style.color = isSelected
-                  ? 'var(--theme-accent)'
-                  : ''
-              }}
-              style={{ color: isSelected ? 'var(--theme-accent)' : undefined }}
               type="button"
             >
               {isExpanded ? (
@@ -157,19 +139,7 @@ function FolderItem({
         </div>
         <div className="flex items-center gap-2 flex-1 min-w-0">
           <span className="text-sm flex-1 truncate">{node.name}</span>
-          <span
-            className={`text-xs px-2 py-0.5 rounded-full font-medium flex-shrink-0 ${
-              isSelected ? '' : 'bg-muted text-muted-foreground'
-            }`}
-            style={
-              isSelected
-                ? {
-                    background: 'var(--theme-accent-subtle)',
-                    color: 'var(--theme-accent)',
-                  }
-                : undefined
-            }
-          >
+          <span className="text-xs px-2 py-0.5 rounded-full font-medium flex-shrink-0 bg-muted text-muted-foreground">
             {node.notes?.length || 0}
           </span>
         </div>
@@ -186,14 +156,14 @@ function FolderItem({
               zIndex: 9999,
             }}
             {...getFloatingProps()}
-            className="bg-white dark:bg-gray-800 shadow-lg rounded-lg py-1 min-w-[180px] border border-gray-200 dark:border-gray-700"
+            className="bg-popover text-popover-foreground shadow-[var(--elevation-md)] rounded-lg py-1 min-w-[180px] border border-border"
           >
-            <div className="px-3 py-1.5 text-xs text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700 font-medium">
+            <div className="px-3 py-1.5 text-xs text-muted-foreground border-b border-border font-medium">
               {node.name}
             </div>
             {onCreateFolder && (
               <button
-                className="w-full px-4 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 text-gray-700 dark:text-gray-300"
+                className="w-full px-4 py-2 text-left text-sm hover:bg-accent flex items-center gap-2 text-foreground"
                 onClick={handleCreateFolder}
                 type="button"
               >
@@ -203,7 +173,7 @@ function FolderItem({
             )}
             {onDeleteFolder && node.relativePath !== '' && (
               <button
-                className="w-full px-4 py-2 text-left text-sm hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2 text-red-600 dark:text-red-400"
+                className="w-full px-4 py-2 text-left text-sm hover:bg-destructive/10 flex items-center gap-2 text-destructive"
                 onClick={handleDeleteFolder}
                 type="button"
               >
@@ -231,6 +201,7 @@ export function FolderTree({
   filteredNotes = [],
   selectedTag = null,
   onSelectTag,
+  width,
 }: FolderTreeProps) {
   const { t } = useTranslation()
   const [expanded, setExpanded] = useState<Set<string>>(new Set(['']))
@@ -433,45 +404,41 @@ export function FolderTree({
   const breadcrumbs = getBreadcrumbs()
 
   return (
-    <div className="w-64 border-r border-gray-200 dark:border-gray-700 bg-sidebar flex flex-col h-full">
+    <div
+      className={`${width === undefined ? 'w-64' : ''} border-r border-border bg-sidebar flex flex-col h-full`}
+      style={width === undefined ? undefined : { width }}
+    >
       <div
-        className="border-b border-gray-200 dark:border-gray-700 flex-shrink-0"
+        className="border-b border-border flex-shrink-0 h-22 flex flex-col"
         style={{
           background:
             'linear-gradient(to bottom, var(--theme-accent-subtle), transparent)',
         }}
       >
-        <div className="h-14 flex items-center justify-between px-4">
-          <h2 className="text-sm font-bold text-gray-800 dark:text-gray-100 flex items-center gap-2">
+        <div className="h-12 flex items-center justify-between px-4">
+          <h2 className="text-heading-sm text-foreground flex items-center gap-2">
             <FiFolder size={16} style={{ color: 'var(--theme-accent)' }} />
             {t('sidebar.folders')}
           </h2>
           {onCreateFolder && (
             <SimpleTooltip content={t('common.create')}>
-              <button
-                className="p-2 rounded-lg transition-all duration-200 shadow-sm hover:shadow"
+              <Button
+                aria-label={t('common.create')}
                 onClick={() => onCreateFolder(currentPath)}
-                onMouseEnter={e => {
-                  e.currentTarget.style.background =
-                    'var(--theme-accent-subtle)'
-                }}
-                onMouseLeave={e => {
-                  e.currentTarget.style.background = ''
-                }}
-                style={{ color: 'var(--theme-accent)' }}
-                type="button"
+                size="icon"
+                variant="ghost"
               >
                 <FiFolderPlus size={16} />
-              </button>
+              </Button>
             </SimpleTooltip>
           )}
         </div>
 
-        <div className="px-4 pb-3 flex items-center gap-2">
+        <div className="flex-1 min-h-0 flex items-center gap-2 px-4">
           {currentPath !== '' && (
             <SimpleTooltip content={t('common.back')}>
               <button
-                className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors flex-shrink-0"
+                className="p-1 hover:bg-accent rounded transition-colors flex-shrink-0"
                 onClick={handleNavigateUp}
                 type="button"
               >
@@ -479,11 +446,11 @@ export function FolderTree({
               </button>
             </SimpleTooltip>
           )}
-          <div className="flex items-center gap-1 text-xs text-gray-600 dark:text-gray-400 min-w-0 flex-1">
+          <div className="flex items-center gap-1 text-xs text-muted-foreground min-w-0 flex-1">
             {breadcrumbs.map((crumb, index) => (
               <React.Fragment key={crumb.path}>
                 {index > 0 && (
-                  <span className="text-gray-400 dark:text-gray-600 flex-shrink-0">
+                  <span className="text-muted-foreground/60 flex-shrink-0">
                     /
                   </span>
                 )}
@@ -532,38 +499,17 @@ export function FolderTree({
         {onShowAllNotes && (
           <SimpleTooltip content={t('folderTree.allNotesTitle')}>
             <button
-              className={`w-full flex justify-start items-center gap-2 px-3 py-2.5 mb-2 cursor-pointer transition-all duration-200 border-l-4 ${
-                showAllNotes
-                  ? 'font-semibold shadow-sm'
-                  : 'hover:bg-gray-100 dark:hover:bg-gray-800/50 text-gray-700 dark:text-gray-300 border-transparent'
+              className={`sidebar-item flex justify-start items-center gap-2 mx-2 px-2 py-2 mb-2 cursor-pointer text-foreground ${
+                showAllNotes ? 'font-semibold' : ''
               }`}
+              data-active={showAllNotes}
               onClick={onShowAllNotes}
-              style={
-                showAllNotes
-                  ? {
-                      background: 'var(--theme-accent-subtle)',
-                      color: 'var(--theme-accent)',
-                      borderLeftColor: 'var(--theme-accent)',
-                    }
-                  : undefined
-              }
+              style={{ width: 'calc(100% - 1rem)' }}
               type="button"
             >
               <span className="text-sm">{t('folderTree.allNotes')}</span>
               {totalNotes > 0 && (
-                <span
-                  className={`ml-auto text-xs px-2 py-0.5 rounded-full font-medium ${
-                    showAllNotes ? '' : 'bg-muted text-muted-foreground'
-                  }`}
-                  style={
-                    showAllNotes
-                      ? {
-                          background: 'var(--theme-accent-subtle)',
-                          color: 'var(--theme-accent)',
-                        }
-                      : undefined
-                  }
-                >
+                <span className="ml-auto text-xs px-2 py-0.5 rounded-full font-medium bg-muted text-muted-foreground">
                   {totalNotes}
                 </span>
               )}

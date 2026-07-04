@@ -1,5 +1,5 @@
 import type React from 'react'
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef } from 'react'
 import { FiCheck, FiUpload, FiTrash2 } from 'react-icons/fi'
 import { useTranslation } from 'react-i18next'
 import { useApp } from '../contexts/AppContext'
@@ -12,7 +12,8 @@ import {
   validateTheme,
   type ColorTheme,
 } from '../lib/themeManager'
-import { SimpleTooltip } from './editor/Tooltip'
+import { Popover } from './ui/popover'
+import { Button } from './ui/button'
 
 export function ColorThemeSelector() {
   const { settings, updateSettings } = useApp()
@@ -22,7 +23,6 @@ export function ColorThemeSelector() {
     loadCustomThemes()
   )
   const [importError, setImportError] = useState<string | null>(null)
-  const containerRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const isDark = document.documentElement.classList.contains('dark')
@@ -31,21 +31,6 @@ export function ColorThemeSelector() {
   const currentTheme = allThemes.find(
     th => th.id === (settings.colorTheme ?? 'gray')
   )
-
-  // クリック外で閉じる
-  useEffect(() => {
-    if (!isOpen) return
-    const handlePointerDown = (e: PointerEvent) => {
-      if (
-        containerRef.current &&
-        !containerRef.current.contains(e.target as Node)
-      ) {
-        setIsOpen(false)
-      }
-    }
-    document.addEventListener('pointerdown', handlePointerDown)
-    return () => document.removeEventListener('pointerdown', handlePointerDown)
-  }, [isOpen])
 
   const handleSelect = (themeId: string) => {
     updateSettings({ colorTheme: themeId })
@@ -105,7 +90,7 @@ export function ColorThemeSelector() {
   }
 
   return (
-    <div className="relative" ref={containerRef}>
+    <>
       <input
         accept=".json"
         className="hidden"
@@ -113,37 +98,40 @@ export function ColorThemeSelector() {
         ref={fileInputRef}
         type="file"
       />
-      <SimpleTooltip content={t('colorTheme.tooltip')}>
-        <button
-          aria-label={t('colorTheme.tooltip')}
-          className="p-1.5 rounded-md hover:bg-gray-100 dark:hover:bg-white/15 transition-all duration-200 flex items-center gap-1"
-          onClick={() => setIsOpen(v => !v)}
-          type="button"
-        >
-          {/* Mini swatch preview */}
-          <span className="flex gap-0.5 items-center">
-            {(isDark ? currentTheme?.swatchesDark : currentTheme?.swatches)
-              ?.slice(0, 3)
-              .map((color, i) => (
-                <span
-                  className="block rounded-full"
-                  key={color}
-                  style={{
-                    width: i === 0 ? 8 : 6,
-                    height: i === 0 ? 8 : 6,
-                    background: color,
-                    border: '1px solid rgba(128,128,128,0.3)',
-                  }}
-                />
-              ))}
-          </span>
-        </button>
-      </SimpleTooltip>
-
-      {isOpen && (
-        <div className="absolute right-0 top-full mt-1 z-[200] w-56 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-lg overflow-hidden">
-          <div className="px-3 py-2 border-b border-gray-100 dark:border-gray-800">
-            <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+      <Popover
+        onOpenChange={setIsOpen}
+        open={isOpen}
+        placement="bottom-end"
+        trigger={
+          <Button
+            aria-label={t('colorTheme.tooltip')}
+            className="flex items-center gap-1"
+            size="icon"
+            variant="ghost"
+          >
+            {/* Mini swatch preview */}
+            <span className="flex gap-0.5 items-center">
+              {(isDark ? currentTheme?.swatchesDark : currentTheme?.swatches)
+                ?.slice(0, 3)
+                .map((color, i) => (
+                  <span
+                    className="block rounded-full"
+                    key={color}
+                    style={{
+                      width: i === 0 ? 8 : 6,
+                      height: i === 0 ? 8 : 6,
+                      background: color,
+                      border: '1px solid rgba(128,128,128,0.3)',
+                    }}
+                  />
+                ))}
+            </span>
+          </Button>
+        }
+      >
+        <div className="w-56 overflow-hidden">
+          <div className="px-3 py-2 border-b border-border">
+            <p className="text-caption font-semibold text-muted-foreground uppercase tracking-wider">
               {t('colorTheme.title')}
             </p>
           </div>
@@ -156,9 +144,7 @@ export function ColorThemeSelector() {
                 <div
                   aria-selected={isSelected}
                   className={`group/row w-full flex items-center gap-2.5 px-2.5 py-2 rounded-md cursor-pointer transition-colors ${
-                    isSelected
-                      ? 'bg-gray-100 dark:bg-white/10'
-                      : 'hover:bg-gray-50 dark:hover:bg-white/5'
+                    isSelected ? 'bg-accent' : 'hover:bg-accent/60'
                   }`}
                   key={theme.id}
                   onClick={() => handleSelect(theme.id)}
@@ -186,20 +172,20 @@ export function ColorThemeSelector() {
                     ))}
                   </span>
                   {/* Theme name */}
-                  <span className="flex-1 text-sm text-gray-700 dark:text-gray-200 truncate">
+                  <span className="flex-1 text-sm text-foreground truncate">
                     {getThemeName(theme, i18n.language)}
                   </span>
                   {/* Selected checkmark */}
                   {isSelected && (
                     <FiCheck
-                      className="text-gray-500 dark:text-gray-400 shrink-0"
+                      className="text-muted-foreground shrink-0"
                       size={13}
                     />
                   )}
                   {/* Delete button for custom themes */}
                   {!isBuiltin && (
                     <button
-                      className="opacity-0 group-hover/row:opacity-100 p-0.5 rounded hover:bg-red-100 dark:hover:bg-red-900/30 hover:text-red-600 dark:hover:text-red-400 text-gray-400 dark:text-gray-500 shrink-0 transition-all"
+                      className="opacity-0 group-hover/row:opacity-100 p-0.5 rounded hover:bg-red-100 dark:hover:bg-red-900/30 hover:text-red-600 dark:hover:text-red-400 text-muted-foreground shrink-0 transition-all"
                       onClick={e => handleDelete(theme.id, e)}
                       title={t('colorTheme.delete')}
                       type="button"
@@ -211,14 +197,14 @@ export function ColorThemeSelector() {
               )
             })}
           </div>
-          <div className="px-3 py-1.5 border-t border-gray-100 dark:border-gray-800">
+          <div className="px-3 py-1.5 border-t border-border">
             {importError && (
-              <p className="text-[10px] text-red-500 dark:text-red-400 mb-1.5">
+              <p className="text-[10px] text-destructive mb-1.5">
                 {importError}
               </p>
             )}
             <button
-              className="w-full flex items-center gap-1.5 px-2 py-1.5 rounded-md text-xs text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/10 transition-colors"
+              className="w-full flex items-center gap-1.5 px-2 py-1.5 rounded-md text-xs text-muted-foreground hover:bg-accent transition-colors"
               onClick={handleImportClick}
               type="button"
             >
@@ -227,7 +213,7 @@ export function ColorThemeSelector() {
             </button>
           </div>
         </div>
-      )}
-    </div>
+      </Popover>
+    </>
   )
 }

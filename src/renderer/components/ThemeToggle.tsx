@@ -1,7 +1,8 @@
 import { FiSun, FiMoon, FiMonitor } from 'react-icons/fi'
 import { useTranslation } from 'react-i18next'
 import { useApp } from '../contexts/AppContext'
-import { SimpleTooltip } from './editor/Tooltip'
+import { SimpleTooltip } from './ui/tooltip'
+import { Button } from './ui/button'
 import type { AppSettings } from '@/shared/types'
 
 export function ThemeToggle() {
@@ -39,13 +40,14 @@ export function ThemeToggle() {
 
   return (
     <SimpleTooltip content={getLabel()}>
-      <button
-        className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-white/15 transition-all duration-200 text-gray-600 dark:text-white"
+      <Button
+        aria-label={getLabel()}
         onClick={cycleTheme}
-        type="button"
+        size="icon"
+        variant="ghost"
       >
         {getIcon()}
-      </button>
+      </Button>
     </SimpleTooltip>
   )
 }

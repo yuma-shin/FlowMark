@@ -13,7 +13,8 @@ import {
   GoTasklist,
   GoInfo,
 } from 'react-icons/go'
-import { SimpleTooltip } from './Tooltip'
+import { SimpleTooltip } from '../ui/tooltip'
+import { Button } from '../ui/button'
 import { ALERT_OPTIONS } from '@/renderer/lib/alertOptions'
 
 interface SelectionToolbarProps {
@@ -45,11 +46,7 @@ export function SelectionToolbar({
   const [showColorPalette, setShowColorPalette] = useState(false)
   const [showAlertPalette, setShowAlertPalette] = useState(false)
 
-  const btn =
-    'p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors'
-  const sep = (
-    <div className="w-px h-6 bg-gray-200 dark:bg-gray-600 self-center" />
-  )
+  const sep = <div className="w-px h-6 bg-border self-center" />
 
   const handleColorApply = (color: string) => {
     setShowColorPalette(false)
@@ -76,99 +73,126 @@ export function SelectionToolbar({
   return (
     <div
       aria-label="Selection formatting toolbar"
-      className="fixed z-50 bg-white dark:bg-gray-800 shadow-lg rounded-lg border border-gray-200 dark:border-gray-700 p-1 flex gap-1 items-center"
+      className="fixed z-50 bg-popover text-popover-foreground rounded-lg border border-border p-1 flex gap-1 items-center shadow-[var(--elevation-md)]"
       onMouseDown={e => e.preventDefault()}
       role="toolbar"
       style={{ top: `${position.top}px`, left: `${position.left}px` }}
     >
       <SimpleTooltip content={t('editor.toolbar.bold')}>
-        <button
-          className={btn}
+        <Button
+          aria-label={t('editor.toolbar.bold')}
           onClick={() => onApplyFormat('**')}
-          type="button"
+          size="icon"
+          variant="ghost"
         >
           <GoBold size={16} />
-        </button>
+        </Button>
       </SimpleTooltip>
       <SimpleTooltip content={t('editor.toolbar.italic')}>
-        <button
-          className={btn}
+        <Button
+          aria-label={t('editor.toolbar.italic')}
           onClick={() => onApplyFormat('*')}
-          type="button"
+          size="icon"
+          variant="ghost"
         >
           <GoItalic size={16} />
-        </button>
+        </Button>
       </SimpleTooltip>
       <SimpleTooltip content={t('editor.toolbar.code')}>
-        <button
-          className={btn}
+        <Button
+          aria-label={t('editor.toolbar.code')}
           onClick={() => onApplyFormat('`')}
-          type="button"
+          size="icon"
+          variant="ghost"
         >
           <GoCodeSquare size={16} />
-        </button>
+        </Button>
       </SimpleTooltip>
       <SimpleTooltip content={t('editor.toolbar.strikethrough')}>
-        <button
-          className={btn}
+        <Button
+          aria-label={t('editor.toolbar.strikethrough')}
           onClick={() => onApplyFormat('~~')}
-          type="button"
+          size="icon"
+          variant="ghost"
         >
           <GoStrikethrough size={16} />
-        </button>
+        </Button>
       </SimpleTooltip>
       <SimpleTooltip content={t('editor.toolbar.link')}>
-        <button
-          className={btn}
+        <Button
+          aria-label={t('editor.toolbar.link')}
           onClick={() => onApplyFormat('[', '](url)')}
-          type="button"
+          size="icon"
+          variant="ghost"
         >
           <GoLink size={16} />
-        </button>
+        </Button>
       </SimpleTooltip>
       {sep}
       <SimpleTooltip content={t('editor.toolbar.quote')}>
-        <button className={btn} onClick={onApplyQuote} type="button">
+        <Button
+          aria-label={t('editor.toolbar.quote')}
+          onClick={onApplyQuote}
+          size="icon"
+          variant="ghost"
+        >
           <GoQuote size={16} />
-        </button>
+        </Button>
       </SimpleTooltip>
       <SimpleTooltip content={t('editor.toolbar.checkbox')}>
-        <button className={btn} onClick={onApplyCheckbox} type="button">
+        <Button
+          aria-label={t('editor.toolbar.checkbox')}
+          onClick={onApplyCheckbox}
+          size="icon"
+          variant="ghost"
+        >
           <GoTasklist size={16} />
-        </button>
+        </Button>
       </SimpleTooltip>
       <SimpleTooltip content={t('editor.toolbar.bulletList')}>
-        <button
-          className={btn}
+        <Button
+          aria-label={t('editor.toolbar.bulletList')}
           onClick={() => onApplyList('bullet')}
-          type="button"
+          size="icon"
+          variant="ghost"
         >
           <GoListUnordered size={16} />
-        </button>
+        </Button>
       </SimpleTooltip>
       <SimpleTooltip content={t('editor.toolbar.orderedList')}>
-        <button
-          className={btn}
+        <Button
+          aria-label={t('editor.toolbar.orderedList')}
           onClick={() => onApplyList('ordered')}
-          type="button"
+          size="icon"
+          variant="ghost"
         >
           <GoListOrdered size={16} />
-        </button>
+        </Button>
       </SimpleTooltip>
       {sep}
       <div className="relative self-center">
         <SimpleTooltip content={t('editor.toolbar.color')}>
-          <button className={btn} onClick={toggleColor} type="button">
+          <Button
+            aria-label={t('editor.toolbar.color')}
+            onClick={toggleColor}
+            size="icon"
+            variant="ghost"
+          >
             <FiDroplet size={15} />
-          </button>
+          </Button>
         </SimpleTooltip>
         {showColorPalette && <ColorPalette onApplyColor={handleColorApply} />}
       </div>
       <div className="relative self-center">
         <SimpleTooltip content={t('editor.toolbar.alert')}>
-          <button className={btn} onClick={toggleAlert} type="button">
+          <Button
+            aria-label={t('editor.toolbar.alert')}
+            onClick={toggleAlert}
+            size="icon"
+            variant="ghost"
+          >
             <GoInfo size={15} />
-          </button>
+          </Button>
         </SimpleTooltip>
         {showAlertPalette && <AlertPalette onApplyAlert={handleAlertApply} />}
       </div>
@@ -203,10 +227,10 @@ function ColorPalette({ onApplyColor }: ColorPaletteProps) {
   ]
 
   return (
-    <div className="absolute left-0 top-full mt-1 bg-white dark:bg-gray-800 shadow-xl rounded-lg border border-gray-200 dark:border-gray-600 p-3 grid grid-cols-4 gap-3 z-50">
+    <div className="absolute left-0 top-full mt-1 bg-popover shadow-[var(--elevation-lg)] rounded-lg border border-border p-3 grid grid-cols-4 gap-3 z-50">
       {colors.map(({ color, title }) => (
         <button
-          className="w-8 h-8 rounded-md hover:scale-110 transition-transform border-2 border-white dark:border-gray-700 shadow-sm"
+          className="w-8 h-8 rounded-md hover:scale-110 transition-transform border-2 border-background shadow-sm"
           key={color}
           onClick={() => onApplyColor(color)}
           style={{ backgroundColor: color }}

@@ -13,7 +13,10 @@
   "titleBar": {
     "selectFolder": "フォルダを選択",
     "toggleSidebar": "サイドバーを表示/非表示",
-    "toggleNoteList": "ノートリストを表示/非表示"
+    "toggleNoteList": "ノートリストを表示/非表示",
+    "minimize": "最小化",
+    "maximize": "最大化",
+    "close": "閉じる"
   },
   "sidebar": {
     "folders": "フォルダ",
@@ -73,7 +76,8 @@
     "deleteNoteMessage": "を削除しますか？\nこの操作は元に戻せません。",
     "deleteFolder": "フォルダを削除",
     "deleteFolderMessage": "を削除しますか？\nこの操作は元に戻せません。",
-    "root": "ルート"
+    "root": "ルート",
+    "location": "作成先"
   },
   "errors": {
     "folderNotFound": "フォルダが見つかりません",

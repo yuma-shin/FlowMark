@@ -10,7 +10,8 @@ import {
 } from 'react-icons/fi'
 import { useTranslation } from 'react-i18next'
 import { useApp } from '../contexts/AppContext'
-import { SimpleTooltip } from './editor/Tooltip'
+import { SimpleTooltip } from './ui/tooltip'
+import { Button } from './ui/button'
 import { ThemeToggle } from './ThemeToggle'
 import { LanguageToggle } from './LanguageToggle'
 import { ColorThemeSelector } from './ColorThemeSelector'
@@ -147,8 +148,9 @@ export function CustomTitleBar({
                 </span>
                 {onChangeRootFolder && (
                   <SimpleTooltip content={t('titleBar.selectFolder')}>
-                    <button
-                      className="px-2 py-0.5 text-xs font-medium rounded transition-all duration-200"
+                    <Button
+                      aria-label={t('titleBar.selectFolder')}
+                      className="px-2 py-0.5 h-auto text-xs font-medium"
                       onClick={onChangeRootFolder}
                       onMouseEnter={e => {
                         e.currentTarget.style.backgroundColor =
@@ -162,10 +164,10 @@ export function CustomTitleBar({
                         color: 'var(--theme-accent)',
                         backgroundColor: 'var(--theme-accent-subtle)',
                       }}
-                      type="button"
+                      variant="ghost"
                     >
                       {t('titleBar.selectFolder')}
-                    </button>
+                    </Button>
                   </SimpleTooltip>
                 )}
               </div>
@@ -178,34 +180,36 @@ export function CustomTitleBar({
       <div className="flex items-center gap-0.5 mr-1.5">
         {onToggleSidebar && (
           <SimpleTooltip content={t('titleBar.toggleSidebar')}>
-            <button
-              className="p-1.5 rounded-md hover:bg-accent transition-all duration-200"
+            <Button
+              aria-label={t('titleBar.toggleSidebar')}
               onClick={onToggleSidebar}
+              size="icon"
               style={{ color: showSidebar ? 'var(--theme-accent)' : undefined }}
-              type="button"
+              variant="ghost"
             >
               <FiSidebar
                 className={showSidebar ? '' : 'text-muted-foreground'}
                 size={16}
               />
-            </button>
+            </Button>
           </SimpleTooltip>
         )}
         {onToggleNoteList && (
           <SimpleTooltip content={t('titleBar.toggleNoteList')}>
-            <button
-              className="p-1.5 rounded-md hover:bg-accent transition-all duration-200"
+            <Button
+              aria-label={t('titleBar.toggleNoteList')}
               onClick={onToggleNoteList}
+              size="icon"
               style={{
                 color: showNoteList ? 'var(--theme-accent)' : undefined,
               }}
-              type="button"
+              variant="ghost"
             >
               <FiList
                 className={showNoteList ? '' : 'text-muted-foreground'}
                 size={16}
               />
-            </button>
+            </Button>
           </SimpleTooltip>
         )}
         <div className="w-px h-4 bg-border mx-0.5" />
@@ -219,34 +223,38 @@ export function CustomTitleBar({
       {/* ウィンドウ操作ボタン (Windows のみ) */}
       {!isMac && (
         <div className="flex items-center gap-0.5 mr-1.5">
-          <button
-            className="p-1.5 rounded-md hover:bg-accent transition-colors"
+          <Button
+            aria-label={t('titleBar.minimize')}
             onClick={handleMinimize}
-            type="button"
+            size="icon"
+            variant="ghost"
           >
             <FiMinus className="text-muted-foreground" size={16} />
-          </button>
-          <button
-            className="p-1.5 rounded-md hover:bg-accent transition-colors"
+          </Button>
+          <Button
+            aria-label={t('titleBar.maximize')}
             onClick={handleMaximize}
-            type="button"
+            size="icon"
+            variant="ghost"
           >
             {isMaximized ? (
               <FiMinimize className="text-muted-foreground" size={16} />
             ) : (
               <FiMaximize className="text-muted-foreground" size={16} />
             )}
-          </button>
-          <button
-            className="p-1.5 rounded-md hover:bg-red-500 transition-colors group"
+          </Button>
+          <Button
+            aria-label={t('titleBar.close')}
+            className="hover:bg-red-500 group"
             onClick={handleClose}
-            type="button"
+            size="icon"
+            variant="ghost"
           >
             <FiX
               className="text-muted-foreground group-hover:text-white"
               size={16}
             />
-          </button>
+          </Button>
         </div>
       )}
     </div>

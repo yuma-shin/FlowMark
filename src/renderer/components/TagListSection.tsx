@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { FiTag, FiX } from 'react-icons/fi'
-import { SimpleTooltip } from './editor/Tooltip'
+import { SimpleTooltip } from './ui/tooltip'
 import type { MarkdownNoteMeta } from '@/shared/types'
 
 interface TagListSectionProps {
@@ -65,15 +65,8 @@ export function TagListSection({
         {selectedTag && (
           <SimpleTooltip content={t('common.search')}>
             <button
-              className="p-1 rounded transition-all duration-200"
+              className="p-1 rounded transition-colors hover:bg-accent text-muted-foreground hover:text-foreground"
               onClick={() => onSelectTag(null)}
-              onMouseEnter={e => {
-                e.currentTarget.style.background = 'var(--theme-accent-subtle)'
-              }}
-              onMouseLeave={e => {
-                e.currentTarget.style.background = ''
-              }}
-              style={{ color: 'var(--theme-accent)' }}
               type="button"
             >
               <FiX size={12} />
@@ -97,49 +90,25 @@ export function TagListSection({
           <div className="space-y-1">
             {tagCounts.map(([tag, count]) => (
               <button
-                className={`w-full px-2 py-1.5 rounded-lg text-left transition-all duration-200 group flex items-center justify-between ${
-                  selectedTag === tag ? 'shadow-sm' : 'hover:bg-accent'
+                className={`w-full px-2 py-1.5 rounded-lg text-left transition-colors group flex items-center justify-between ${
+                  selectedTag === tag ? 'bg-accent' : 'hover:bg-accent'
                 }`}
                 key={tag}
                 onClick={() => handleTagClick(tag)}
-                style={
-                  selectedTag === tag
-                    ? { background: 'var(--theme-accent-subtle)' }
-                    : undefined
-                }
                 type="button"
               >
                 <div className="flex items-center gap-1.5 flex-1 min-w-0">
                   <FiTag
-                    className="flex-shrink-0"
+                    className="flex-shrink-0 text-muted-foreground"
                     size={12}
-                    style={{
-                      color:
-                        selectedTag === tag ? 'var(--theme-accent)' : undefined,
-                    }}
                   />
                   <span
-                    className={`text-xs truncate ${selectedTag === tag ? 'font-semibold' : 'text-foreground'}`}
-                    style={
-                      selectedTag === tag
-                        ? { color: 'var(--theme-accent)' }
-                        : undefined
-                    }
+                    className={`text-xs truncate text-foreground ${selectedTag === tag ? 'font-semibold' : ''}`}
                   >
                     {tag}
                   </span>
                 </div>
-                <span
-                  className={`text-xs px-1.5 py-0.5 rounded-full flex-shrink-0 ${selectedTag === tag ? 'font-medium' : 'bg-muted text-muted-foreground'}`}
-                  style={
-                    selectedTag === tag
-                      ? {
-                          background: 'var(--theme-accent-subtle)',
-                          color: 'var(--theme-accent)',
-                        }
-                      : undefined
-                  }
-                >
+                <span className="text-xs px-1.5 py-0.5 rounded-full flex-shrink-0 bg-muted text-muted-foreground">
                   {count}
                 </span>
               </button>

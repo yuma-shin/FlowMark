@@ -313,7 +313,7 @@ export function EditorView({
     >
       {/* 保存中プログレスバー */}
       {isSaving && (
-        <div className="absolute top-0 left-0 right-0 z-50 h-0.5 bg-gray-200 dark:bg-gray-700 overflow-hidden">
+        <div className="absolute top-0 left-0 right-0 z-50 h-0.5 bg-muted overflow-hidden">
           <div
             className="h-full animate-[progress_1s_ease-in-out_infinite]"
             style={{
@@ -328,10 +328,10 @@ export function EditorView({
 
       {/* 保存エラーバナー */}
       {saveError && (
-        <div className="absolute top-0 left-0 right-0 z-50 flex items-center gap-2 px-3 py-1.5 bg-red-50 dark:bg-red-950 border-b border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 text-xs">
+        <div className="absolute top-0 left-0 right-0 z-50 flex items-center gap-2 px-3 py-1.5 bg-destructive/10 border-b border-destructive/30 text-destructive text-xs">
           <span className="flex-1 truncate">{saveError}</span>
           <button
-            className="shrink-0 rounded px-1.5 py-0.5 hover:bg-red-100 dark:hover:bg-red-900 transition-colors"
+            className="shrink-0 rounded px-1.5 py-0.5 hover:bg-destructive/20 transition-colors"
             onClick={onSaveErrorDismiss}
             type="button"
           >
@@ -453,8 +453,8 @@ export function EditorView({
               aria-label="Resize editor and preview panes"
               className={`w-0.5 ${
                 isDragging
-                  ? 'bg-blue-500 dark:bg-blue-400'
-                  : 'bg-gray-300 dark:bg-gray-700 hover:bg-blue-400 dark:hover:bg-blue-600'
+                  ? 'bg-[color:var(--theme-accent)]'
+                  : 'bg-border hover:bg-[color:var(--theme-accent)]'
               } cursor-col-resize flex-shrink-0 transition-colors`}
               onMouseDown={e => {
                 e.preventDefault()

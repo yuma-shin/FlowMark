@@ -66,9 +66,11 @@ export function validateTheme(data: unknown): boolean {
 export function applyColorTheme(themeId: string, isDark: boolean): void {
   const allThemes = [...builtinThemes, ...loadCustomThemes()]
   const theme = allThemes.find(t => t.id === themeId) ?? builtinThemes[0]
+  const fallback = builtinThemes[0]
+  const fallbackVars = isDark ? fallback.dark : fallback.light
   const vars = isDark ? theme.dark : theme.light
   const root = document.documentElement
-  for (const [key, value] of Object.entries(vars)) {
+  for (const [key, value] of Object.entries({ ...fallbackVars, ...vars })) {
     root.style.setProperty(key, value)
   }
 }

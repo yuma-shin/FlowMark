@@ -28,6 +28,8 @@ export interface AppSettings {
   lastSelectedFolder?: string
   showSidebar?: boolean
   showNoteList?: boolean
+  sidebarWidth?: number
+  noteListWidth?: number
 }
 
 export interface NoteContent {

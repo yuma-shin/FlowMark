@@ -13,7 +13,10 @@
   "titleBar": {
     "selectFolder": "Select Folder",
     "toggleSidebar": "Toggle Sidebar",
-    "toggleNoteList": "Toggle Note List"
+    "toggleNoteList": "Toggle Note List",
+    "minimize": "Minimize",
+    "maximize": "Maximize",
+    "close": "Close"
   },
   "sidebar": {
     "folders": "Folders",
@@ -73,7 +76,8 @@
     "deleteNoteMessage": "will be deleted?\nThis action cannot be undone.",
     "deleteFolder": "Delete Folder",
     "deleteFolderMessage": "will delete the folder and all its contents?\nThis action cannot be undone.",
-    "root": "Root"
+    "root": "Root",
+    "location": "Location"
   },
   "errors": {
     "folderNotFound": "Folder not found",

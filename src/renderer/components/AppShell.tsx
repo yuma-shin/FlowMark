@@ -1,11 +1,19 @@
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { CustomTitleBar } from './CustomTitleBar'
 import { FolderTree } from './FolderTree'
 import { NoteList } from './NoteList'
 import { EditorView } from './EditorView'
+import { StatusBar } from './StatusBar'
 import { useResizablePane } from '@/renderer/hooks/useResizablePane'
+import { useEditorStatus } from '@/renderer/hooks/useEditorStatus'
+import { useAppVersion } from '@/renderer/hooks/useAppVersion'
 import type { UseNoteWorkspaceResult } from '@/renderer/hooks/useNoteWorkspace'
 import type { AppSettings, MarkdownNoteMeta } from '@/shared/types'
+import type {
+  EditorCursorPosition,
+  SelectionStats,
+} from '@/renderer/lib/codemirror/editorStatus'
 
 const DEFAULT_SIDEBAR_WIDTH = 256
 const MIN_SIDEBAR_WIDTH = 180
@@ -53,6 +61,19 @@ export function AppShell({
     maxWidth: MAX_NOTE_LIST_WIDTH,
     onWidthCommit: onNoteListWidthCommit,
   })
+
+  const editorStats = useEditorStatus(workspace.noteContent)
+  const version = useAppVersion()
+  const [cursor, setCursor] = useState<EditorCursorPosition | null>(null)
+  const [selectionStats, setSelectionStats] = useState<SelectionStats | null>(
+    null
+  )
+
+  // ノート切り替え時に前ノートのカーソル/選択状態をリセットする
+  useEffect(() => {
+    setCursor(null)
+    setSelectionStats(null)
+  }, [workspace.selectedNote?.filePath])
 
   return (
     <div className="h-screen flex flex-col overflow-hidden bg-background">
@@ -131,10 +152,12 @@ export function AppShell({
               layoutMode={settings.editorLayoutMode}
               noteMeta={workspace.selectedNote}
               onChange={workspace.onContentChange}
+              onCursorChange={setCursor}
               onLayoutModeChange={workspace.onLayoutModeChange}
               onMetadataChange={workspace.onMetadataChange}
               onNoteMove={workspace.onNoteMove}
               onSaveErrorDismiss={workspace.onSaveErrorDismiss}
+              onSelectionStatsChange={setSelectionStats}
               onToggleNoteList={workspace.onToggleNoteList}
               onToggleSidebar={workspace.onToggleSidebar}
               rootDir={settings.rootDir}
@@ -359,6 +382,12 @@ export function AppShell({
           </div>
         )}
       </div>
+      <StatusBar
+        cursor={workspace.selectedNote ? cursor : null}
+        selectionStats={workspace.selectedNote ? selectionStats : null}
+        stats={workspace.selectedNote ? editorStats : null}
+        version={version}
+      />
     </div>
   )
 }

@@ -60,6 +60,12 @@
       "editorOnly": "Editor Only",
       "splitView": "Split View",
       "previewOnly": "Preview Only"
+    },
+    "statusBar": {
+      "cursorPosition": "Ln {{line}}, Col {{column}}",
+      "words": "{{count}} words",
+      "chars": "{{count}} chars",
+      "lines": "{{count}} lines"
     }
   },
   "dialog": {

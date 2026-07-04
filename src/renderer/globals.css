@@ -590,53 +590,113 @@ pre,
   list-style-type: square;
 }
 
-/* Enhanced Typography */
-.markdown-body h1 {
-  padding-bottom: 0.5em;
-  margin-top: 1.5em;
-  margin-bottom: 1em;
+/* Enhanced Typography
+ * github-markdown-light/dark.css の `.markdown-body h1`〜`h6` と同一specificity (0,1,1) のため、
+ * CSS読み込み順次第でライブラリ側のデフォルト装飾(下線等)に上書きされることがある。
+ * data-color-mode 属性スコープで specificity (0,2,1) に上げ、確実に上書きする
+ * (ネストアラートのタイトル色修正と同じ手法)。
+ */
+.markdown-body[data-color-mode] h1 {
+  position: relative;
+  padding-bottom: 0.6em;
+  margin-top: 1.75em;
+  margin-bottom: 1.2em;
   font-weight: 700;
+  line-height: 1.4;
   color: var(--theme-heading-color);
   letter-spacing: -0.02em;
-  border-bottom: 2px solid;
-  border-image: linear-gradient(
-      90deg,
-      var(--theme-gradient-from),
-      var(--theme-gradient-to)
-    )
-    1;
+  border-bottom: none;
 }
 
-.markdown-body h2 {
-  padding-bottom: 0.4em;
+.markdown-body[data-color-mode] h1::after {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 0.15em;
+  content: "";
+  background: linear-gradient(
+    to right,
+    var(--theme-accent) 0%,
+    var(--theme-accent) 12%,
+    var(--theme-gradient-to) 12%,
+    var(--theme-gradient-to) 24%,
+    var(--border) 24%,
+    var(--border) 100%
+  );
+  border-radius: 9999px;
+}
+
+.markdown-body[data-color-mode] h2 {
+  display: flex;
+  gap: 0.5em;
+  align-items: center;
+  padding-bottom: 0;
   margin-top: 1.5em;
   margin-bottom: 0.8em;
   font-weight: 600;
+  line-height: 1.4;
   color: var(--theme-heading-color);
   letter-spacing: -0.01em;
-  border-bottom: 1px solid var(--border);
+  border-bottom: none;
 }
 
-.markdown-body h3 {
+.markdown-body[data-color-mode] h2::before {
+  display: block;
+  flex-shrink: 0;
+  width: 0.22em;
+  height: 1em;
+  content: "";
+  background: linear-gradient(
+    to bottom,
+    var(--theme-accent) 50%,
+    var(--theme-gradient-to) 50%
+  );
+  border-radius: 9999px;
+}
+
+.markdown-body[data-color-mode] h3 {
+  display: flex;
+  gap: 0.45em;
+  align-items: center;
   margin-top: 1.25em;
   margin-bottom: 0.6em;
   font-weight: 600;
   color: var(--theme-heading-color);
 }
 
-.markdown-body h4,
-.markdown-body h5 {
-  margin-top: 1em;
+.markdown-body[data-color-mode] h3::before {
+  display: block;
+  flex-shrink: 0;
+  align-self: stretch;
+  width: 0.15em;
+  content: "";
+  background-color: var(--theme-accent);
+  border-radius: 9999px;
+  opacity: 0.7;
+}
+
+.markdown-body[data-color-mode] h4 {
+  margin-top: 1.1em;
   margin-bottom: 0.5em;
   font-weight: 600;
   color: var(--theme-heading-color);
 }
 
-.markdown-body h6 {
+.markdown-body[data-color-mode] h5 {
   margin-top: 1em;
-  margin-bottom: 0.5em;
+  margin-bottom: 0.4em;
+  font-weight: 600;
+  color: var(--theme-heading-color);
+}
+
+.markdown-body[data-color-mode] h6 {
+  margin-top: 1em;
+  margin-bottom: 0.4em;
   font-weight: 600;
   color: var(--muted-foreground);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
 }
 
 .markdown-body p {
@@ -659,11 +719,12 @@ pre,
 
 /* Horizontal Rule */
 .markdown-body hr {
-  height: 0.25em;
+  height: 0;
   padding: 0;
   margin: 2em 0;
-  background: linear-gradient(90deg, transparent, var(--border), transparent);
+  background: none;
   border: 0;
+  border-top: 1px solid var(--border);
 }
 
 /* Code block theme overrides */
@@ -694,32 +755,6 @@ pre,
 .dark .markdown-body del {
   text-decoration: line-through;
   opacity: 0.7;
-}
-
-/* Table theme overrides */
-.markdown-body table {
-  border-collapse: collapse;
-  background-color: transparent;
-}
-
-.markdown-body table th,
-.markdown-body table td {
-  padding: 6px 13px;
-  border: 1px solid var(--border);
-}
-
-.markdown-body table th {
-  font-weight: 600;
-  background-color: var(--secondary);
-}
-
-.markdown-body table tr {
-  background-color: var(--background);
-  border-top: 1px solid var(--border);
-}
-
-.markdown-body table tr:nth-child(2n) {
-  background-color: var(--muted);
 }
 
 /* Pre code blocks - no background override */
@@ -1115,51 +1150,44 @@ pre,
   font-size: 0.95em;
   border-spacing: 0;
   border-collapse: separate;
+  border: 1px solid var(--border);
   border-radius: 8px;
-  box-shadow:
-    0 1px 3px 0 rgb(0 0 0 / 0.1),
-    0 1px 2px -1px rgb(0 0 0 / 0.1);
-}
-
-.dark .markdown-body table {
-  box-shadow:
-    0 1px 3px 0 rgb(0 0 0 / 0.3),
-    0 1px 2px -1px rgb(0 0 0 / 0.2);
 }
 
 .markdown-body table th {
-  padding: 12px 16px;
+  padding: 10px 16px;
   font-size: 0.75em;
   font-weight: 600;
   color: var(--muted-foreground);
   text-align: left;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  background: var(--secondary);
-  border: none;
-  border-bottom: 2px solid var(--border);
-}
-
-.markdown-body table td {
-  padding: 12px 16px;
+  background-color: var(--secondary);
   border: none;
   border-bottom: 1px solid var(--border);
 }
 
-.markdown-body table tbody tr {
+/* 行の縞模様・ホバー色は tr ではなく td に直接指定する。
+ * tr の background-color は border-collapse と組み合わせた際に
+ * 一部の行が塗り替えられず既定色(黒)のまま残ることがあるため避ける。 */
+.markdown-body table td {
+  padding: 10px 16px;
+  background-color: var(--background);
+  border: none;
+  border-top: 1px solid var(--border);
   transition: background-color 0.15s ease;
 }
 
-.markdown-body table tbody tr:hover {
+.markdown-body table tbody tr:hover td {
   background-color: var(--accent);
 }
 
-.markdown-body table tbody tr:nth-child(even) {
+.markdown-body table tbody tr:nth-child(even) td {
   background-color: var(--muted);
 }
 
-.markdown-body table tbody tr:last-child td {
-  border-bottom: none;
+.markdown-body table tbody tr:first-child td {
+  border-top: none;
 }
 
 /* Table alignment */

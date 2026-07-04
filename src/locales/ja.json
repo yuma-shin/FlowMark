@@ -60,6 +60,12 @@
       "editorOnly": "エディタのみ",
       "splitView": "分割表示",
       "previewOnly": "プレビューのみ"
+    },
+    "statusBar": {
+      "cursorPosition": "行 {{line}}, 列 {{column}}",
+      "words": "{{count}} 語",
+      "chars": "{{count}} 文字",
+      "lines": "{{count}} 行"
     }
   },
   "dialog": {

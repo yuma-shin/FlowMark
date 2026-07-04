@@ -19,6 +19,7 @@ import { useEditorScrollSync } from '@/renderer/hooks/useEditorScrollSync'
 import { useSplitView } from '@/renderer/hooks/useSplitView'
 import { useImageInsertion } from '@/renderer/hooks/useImageInsertion'
 import { usePdfExport } from '@/renderer/hooks/usePdfExport'
+import { createBlockquoteDecorationExtension } from '@/renderer/lib/codemirror/blockquoteDecoration'
 import type { AppSettings, MarkdownNoteMeta, FolderNode } from '@/shared/types'
 
 const lineWrapping = CodemirrorEditorView.lineWrapping
@@ -180,6 +181,11 @@ export function EditorView({
   const { completionState, filteredOptions, alertExtension, handleSelect } =
     useAlertAutocomplete(editorViewRef)
 
+  const blockquoteDecorationExtension = useMemo(
+    () => createBlockquoteDecorationExtension(),
+    []
+  )
+
   const {
     exportPdf,
     isExporting: isPdfExporting,
@@ -194,8 +200,9 @@ export function EditorView({
       Prec.high(syntaxHighlighting(markdownStyle)),
       imageHandlerExtension,
       alertExtension,
+      blockquoteDecorationExtension,
     ],
-    [imageHandlerExtension, alertExtension]
+    [imageHandlerExtension, alertExtension, blockquoteDecorationExtension]
   )
 
   const handleExportPdf = async () => {

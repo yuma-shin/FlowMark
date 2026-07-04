@@ -895,6 +895,94 @@ pre,
   color: #f85149;
 }
 
+/* Editor blockquote/Alert decoration
+ * Previewの引用ブロック/Alert配色(上記 GitHub Alerts セクション)と色値を同期させること。
+ * Preview側を変更した場合はこちらの色値も合わせて更新する。
+ */
+.cm-content .cm-blockquote-line {
+  position: relative;
+  padding-left: 1em;
+}
+
+.cm-content .cm-blockquote-line::before {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0.3em;
+  width: 3px;
+  content: "";
+  background-color: var(--border);
+  border-radius: 9999px;
+}
+
+.cm-content .cm-blockquote-marker-line {
+  font-weight: 600;
+}
+
+/* Editor Alert - Note (Blue) */
+.cm-content .cm-blockquote-note::before {
+  background-color: #0969da;
+}
+.cm-content .cm-blockquote-note.cm-blockquote-marker-line {
+  color: #0969da;
+}
+.dark .cm-content .cm-blockquote-note::before {
+  background-color: #4493f8;
+}
+.dark .cm-content .cm-blockquote-note.cm-blockquote-marker-line {
+  color: #4493f8;
+}
+
+/* Editor Alert - Tip (Green) */
+.cm-content .cm-blockquote-tip::before {
+  background-color: #1a7f37;
+}
+.cm-content .cm-blockquote-tip.cm-blockquote-marker-line {
+  color: #1a7f37;
+}
+.dark .cm-content .cm-blockquote-tip::before {
+  background-color: #3fb950;
+}
+.dark .cm-content .cm-blockquote-tip.cm-blockquote-marker-line {
+  color: #3fb950;
+}
+
+/* Editor Alert - Important (uses theme accent) */
+.cm-content .cm-blockquote-important::before {
+  background-color: var(--theme-accent);
+}
+.cm-content .cm-blockquote-important.cm-blockquote-marker-line {
+  color: var(--theme-accent);
+}
+
+/* Editor Alert - Warning (Orange) */
+.cm-content .cm-blockquote-warning::before {
+  background-color: #bf8700;
+}
+.cm-content .cm-blockquote-warning.cm-blockquote-marker-line {
+  color: #bf8700;
+}
+.dark .cm-content .cm-blockquote-warning::before {
+  background-color: #d29922;
+}
+.dark .cm-content .cm-blockquote-warning.cm-blockquote-marker-line {
+  color: #d29922;
+}
+
+/* Editor Alert - Caution (Red) */
+.cm-content .cm-blockquote-caution::before {
+  background-color: #d1242f;
+}
+.cm-content .cm-blockquote-caution.cm-blockquote-marker-line {
+  color: #d1242f;
+}
+.dark .cm-content .cm-blockquote-caution::before {
+  background-color: #f85149;
+}
+.dark .cm-content .cm-blockquote-caution.cm-blockquote-marker-line {
+  color: #f85149;
+}
+
 /* Custom title bar drag region */
 .drag-region {
   -webkit-app-region: drag;

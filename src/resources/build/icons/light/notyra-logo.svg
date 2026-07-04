@@ -1,6 +1,6 @@
-<svg width="512" height="512" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+<svg fill="none" height="512" viewBox="0 0 24 24" width="512" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <linearGradient id="notyra-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+    <linearGradient id="notyra-gradient" x1="0%" x2="100%" y1="0%" y2="100%">
       <stop offset="0%" stop-color="#a78bfa" />
       <stop offset="100%" stop-color="#c084fc" />
     </linearGradient>
@@ -18,9 +18,9 @@
   <path
     d="M7 11H11M7 14H13M7 17H10"
     stroke="url(#notyra-gradient)"
-    stroke-width="2"
     stroke-linecap="round"
+    stroke-width="2"
   />
-  <circle cx="15" cy="14" r="1.5" fill="url(#notyra-gradient)" />
-  <circle cx="17" cy="17" r="1" fill="url(#notyra-gradient)" fill-opacity="0.6" />
+  <circle cx="15" cy="14" fill="url(#notyra-gradient)" r="1.5" />
+  <circle cx="17" cy="17" fill="url(#notyra-gradient)" fill-opacity="0.6" r="1" />
 </svg>

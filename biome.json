@@ -43,7 +43,7 @@
         "noUnusedImports": "warn",
         "useExhaustiveDependencies": "off"
       },
-      "recommended": true,
+      "preset": "recommended",
       "style": {
         "noUselessElse": "warn"
       },

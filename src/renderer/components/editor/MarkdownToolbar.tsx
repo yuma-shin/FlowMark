@@ -22,6 +22,7 @@ import {
   GoTable,
 } from 'react-icons/go'
 import { SimpleTooltip } from './Tooltip'
+import { ALERT_OPTIONS } from '@/renderer/lib/alertOptions'
 
 type ListType = 'bullet' | 'ordered'
 
@@ -420,29 +421,20 @@ interface AlertPaletteProps {
 }
 
 function AlertPalette({ onApplyAlert }: AlertPaletteProps) {
-  const alerts = [
-    { type: 'NOTE' as const, label: '📘 Note', color: 'bg-blue-500' },
-    { type: 'TIP' as const, label: '💡 Tip', color: 'bg-green-500' },
-    {
-      type: 'IMPORTANT' as const,
-      label: '⚠️ Important',
-      color: 'bg-purple-500',
-    },
-    { type: 'WARNING' as const, label: '⚡ Warning', color: 'bg-yellow-500' },
-    { type: 'CAUTION' as const, label: '🚨 Caution', color: 'bg-red-500' },
-  ]
-
   return (
-    <div className="absolute right-0 top-full mt-1 bg-popover shadow-xl rounded-lg border border-border p-2 flex flex-col gap-2 z-50 min-w-[140px]">
-      {alerts.map(({ type, label, color }) => (
+    <div className="absolute right-0 top-full mt-1 bg-popover shadow-xl rounded-lg border border-border py-1 z-50 w-max">
+      {ALERT_OPTIONS.map(({ type, label, color, previewText }) => (
         <button
-          className={`px-3 py-2 text-sm font-medium rounded-md hover:scale-105 transition-transform ${color} text-white`}
+          className="w-full flex items-center gap-2 px-3 py-2 text-sm text-popover-foreground hover:bg-accent transition-colors text-left"
           key={type}
           onClick={() => onApplyAlert(type)}
-          title={label}
           type="button"
         >
-          {label}
+          <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${color}`} />
+          <span className="font-mono text-xs text-muted-foreground shrink-0">
+            {previewText}
+          </span>
+          <span className="text-xs whitespace-nowrap">{label}</span>
         </button>
       ))}
     </div>

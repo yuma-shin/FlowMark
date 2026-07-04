@@ -11,8 +11,10 @@ import { MarkdownPreview } from './MarkdownPreview'
 import { MetadataEditor } from './MetadataEditor'
 import { MarkdownToolbar } from './editor/MarkdownToolbar'
 import { SelectionToolbar } from './editor/SelectionToolbar'
+import { AlertAutocompleteMenu } from './editor/AlertAutocompleteMenu'
 import { FloatingViewButtons } from './editor/FloatingViewButtons'
 import { useTextSelection } from '@/renderer/hooks/useTextSelection'
+import { useAlertAutocomplete } from '@/renderer/hooks/useAlertAutocomplete'
 import { useEditorScrollSync } from '@/renderer/hooks/useEditorScrollSync'
 import { useSplitView } from '@/renderer/hooks/useSplitView'
 import { useImageInsertion } from '@/renderer/hooks/useImageInsertion'
@@ -175,6 +177,9 @@ export function EditorView({
       editorViewRef,
     })
 
+  const { completionState, filteredOptions, alertExtension, handleSelect } =
+    useAlertAutocomplete(editorViewRef)
+
   const {
     exportPdf,
     isExporting: isPdfExporting,
@@ -188,8 +193,9 @@ export function EditorView({
       lineWrapping,
       Prec.high(syntaxHighlighting(markdownStyle)),
       imageHandlerExtension,
+      alertExtension,
     ],
-    [imageHandlerExtension]
+    [imageHandlerExtension, alertExtension]
   )
 
   const handleExportPdf = async () => {
@@ -486,6 +492,12 @@ export function EditorView({
           position={selectionToolbarPos}
         />
       )}
+
+      <AlertAutocompleteMenu
+        completionState={completionState}
+        filteredOptions={filteredOptions}
+        onSelect={handleSelect}
+      />
 
       <FloatingViewButtons
         layoutMode={layoutMode}

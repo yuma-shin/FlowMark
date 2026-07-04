@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { FiFolder, FiZap, FiFileText, FiHeart } from 'react-icons/fi'
 import { tauriApi as App } from '@/renderer/lib/tauriApi'
+import { Button } from './ui/button'
 
 interface WelcomeScreenProps {
   onSelect: (path: string) => void
@@ -25,13 +26,19 @@ export function WelcomeScreen({ onSelect }: WelcomeScreenProps) {
     }
   }
 
+  const features = [
+    { icon: FiZap, label: t('welcome.features.speed') },
+    { icon: FiFileText, label: t('welcome.features.preview') },
+    { icon: FiHeart, label: t('welcome.features.ui') },
+  ]
+
   // NotyraロゴSVG（大きめ）
   const NotyraLogo = () => (
     <svg
       fill="none"
-      height="80"
+      height="64"
       viewBox="0 0 80 80"
-      width="80"
+      width="64"
       xmlns="http://www.w3.org/2000/svg"
     >
       <defs>
@@ -42,9 +49,14 @@ export function WelcomeScreen({ onSelect }: WelcomeScreenProps) {
           y1="0%"
           y2="100%"
         >
-          <stop offset="0%" stopColor="#667eea" />
-          <stop offset="50%" stopColor="#764ba2" />
-          <stop offset="100%" stopColor="#a78bfa" />
+          <stop
+            offset="0%"
+            style={{ stopColor: 'var(--theme-gradient-from)' }}
+          />
+          <stop
+            offset="100%"
+            style={{ stopColor: 'var(--theme-gradient-to)' }}
+          />
         </linearGradient>
       </defs>
       {/* 流れるようなドキュメントの形 */}
@@ -71,82 +83,54 @@ export function WelcomeScreen({ onSelect }: WelcomeScreenProps) {
   )
 
   return (
-    <div
-      className="flex-1 flex items-center justify-center overflow-auto"
-      style={{
-        background:
-          'linear-gradient(135deg, rgba(102, 126, 234, 0.95) 0%, rgba(118, 75, 162, 0.95) 50%, rgba(167, 139, 250, 0.95) 100%)',
-      }}
-    >
-      <div className="max-w-2xl w-full mx-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
-        {/* メインコンテンツ */}
+    <div className="flex-1 flex items-center justify-center overflow-auto bg-background">
+      <div className="max-w-md w-full mx-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
         <div className="text-center mb-8">
-          {/* ロゴ */}
           <div className="flex justify-center mb-6">
             <NotyraLogo />
           </div>
 
-          {/* タイトル */}
-          <h1 className="text-5xl font-bold text-white mb-4 tracking-tight">
+          <h1 className="text-heading-lg text-foreground mb-2">
             {t('welcome.title')}
           </h1>
-          <p className="text-xl text-white/90 mb-8 font-light">
+          <p className="text-body text-muted-foreground mb-8">
             {t('welcome.subtitle')}
           </p>
 
-          {/* 特徴カード */}
-          <div className="grid grid-cols-3 gap-4 mb-10 px-8">
-            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
-              <FiZap className="text-white mx-auto mb-2" size={28} />
-              <p className="text-white text-sm font-medium">
-                {t('welcome.features.speed')}
-              </p>
-            </div>
-            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
-              <FiFileText className="text-white mx-auto mb-2" size={28} />
-              <p className="text-white text-sm font-medium">
-                {t('welcome.features.preview')}
-              </p>
-            </div>
-            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
-              <FiHeart className="text-white mx-auto mb-2" size={28} />
-              <p className="text-white text-sm font-medium">
-                {t('welcome.features.ui')}
-              </p>
-            </div>
+          <div className="grid grid-cols-3 gap-3 mb-8">
+            {features.map(({ icon: Icon, label }) => (
+              <div
+                className="rounded-lg border border-border bg-card p-4"
+                key={label}
+              >
+                <Icon
+                  className="mx-auto mb-2"
+                  size={20}
+                  style={{ color: 'var(--theme-accent)' }}
+                />
+                <p className="text-caption text-muted-foreground">{label}</p>
+              </div>
+            ))}
           </div>
+        </div>
 
-          {/* フォルダ選択ボタン */}
-          <div className="bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl p-8 border border-white/30">
-            <p className="text-gray-700 mb-6 text-lg">
-              {t('welcome.selectFolderText')}
-            </p>
-            <button
-              className="w-full flex items-center justify-center gap-3 px-8 py-4 text-white rounded-xl font-semibold text-lg shadow-lg hover:shadow-xl transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-60"
-              disabled={isSelecting}
-              onClick={handleSelectFolder}
-              onMouseEnter={e => {
-                if (!e.currentTarget.disabled)
-                  e.currentTarget.style.opacity = '0.85'
-              }}
-              onMouseLeave={e => {
-                e.currentTarget.style.opacity = '1'
-              }}
-              style={{
-                background:
-                  'linear-gradient(to right, var(--theme-gradient-from), var(--theme-gradient-to))',
-              }}
-              type="button"
-            >
-              <FiFolder size={24} />
-              {isSelecting
-                ? t('welcome.selectButtonSelecting')
-                : t('welcome.selectButtonText')}
-            </button>
-            <p className="text-gray-500 text-sm mt-4">
-              {t('welcome.selectFolderHint')}
-            </p>
-          </div>
+        <div className="rounded-xl border border-border bg-card p-6 shadow-[var(--elevation-md)]">
+          <p className="text-sm text-foreground mb-4">
+            {t('welcome.selectFolderText')}
+          </p>
+          <Button
+            className="w-full"
+            disabled={isSelecting}
+            onClick={handleSelectFolder}
+          >
+            <FiFolder size={18} />
+            {isSelecting
+              ? t('welcome.selectButtonSelecting')
+              : t('welcome.selectButtonText')}
+          </Button>
+          <p className="text-caption text-muted-foreground mt-3">
+            {t('welcome.selectFolderHint')}
+          </p>
         </div>
       </div>
     </div>

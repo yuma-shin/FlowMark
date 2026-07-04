@@ -21,7 +21,8 @@ import {
   GoTasklist,
   GoTable,
 } from 'react-icons/go'
-import { SimpleTooltip } from './Tooltip'
+import { SimpleTooltip } from '../ui/tooltip'
+import { Button } from '../ui/button'
 import { ALERT_OPTIONS } from '@/renderer/lib/alertOptions'
 
 type ListType = 'bullet' | 'ordered'
@@ -96,7 +97,6 @@ export function MarkdownToolbar({
     document.addEventListener('mousedown', handleOutsideClick)
     return () => document.removeEventListener('mousedown', handleOutsideClick)
   }, [showExportMenu])
-  const btn = 'p-1.5 hover:bg-accent rounded transition-colors'
   const sep = <div className="w-px h-5 bg-border self-center mx-0.5" />
 
   return (
@@ -108,13 +108,14 @@ export function MarkdownToolbar({
       {/* Heading */}
       <div className="relative self-center">
         <SimpleTooltip content={t('editor.toolbar.heading')}>
-          <button
-            className={btn}
+          <Button
+            aria-label={t('editor.toolbar.heading')}
             onClick={onToggleHeadingPalette}
-            type="button"
+            size="icon"
+            variant="ghost"
           >
             <GoHeading size={15} />
-          </button>
+          </Button>
         </SimpleTooltip>
         {showHeadingPalette && (
           <HeadingPalette onApplyHeading={onApplyHeading} />
@@ -125,89 +126,111 @@ export function MarkdownToolbar({
 
       {/* Inline formats */}
       <SimpleTooltip content={t('editor.toolbar.bold')}>
-        <button
-          className={btn}
+        <Button
+          aria-label={t('editor.toolbar.bold')}
           onClick={() => onApplyFormat('**')}
-          type="button"
+          size="icon"
+          variant="ghost"
         >
           <GoBold size={15} />
-        </button>
+        </Button>
       </SimpleTooltip>
       <SimpleTooltip content={t('editor.toolbar.italic')}>
-        <button
-          className={btn}
+        <Button
+          aria-label={t('editor.toolbar.italic')}
           onClick={() => onApplyFormat('*')}
-          type="button"
+          size="icon"
+          variant="ghost"
         >
           <GoItalic size={15} />
-        </button>
+        </Button>
       </SimpleTooltip>
       <SimpleTooltip content={t('editor.toolbar.code')}>
-        <button
-          className={btn}
+        <Button
+          aria-label={t('editor.toolbar.code')}
           onClick={() => onApplyFormat('`')}
-          type="button"
+          size="icon"
+          variant="ghost"
         >
           <GoCodeSquare size={15} />
-        </button>
+        </Button>
       </SimpleTooltip>
       <SimpleTooltip content={t('editor.toolbar.strikethrough')}>
-        <button
-          className={btn}
+        <Button
+          aria-label={t('editor.toolbar.strikethrough')}
           onClick={() => onApplyFormat('~~')}
-          type="button"
+          size="icon"
+          variant="ghost"
         >
           <GoStrikethrough size={15} />
-        </button>
+        </Button>
       </SimpleTooltip>
       <SimpleTooltip content={t('editor.toolbar.link')}>
-        <button
-          className={btn}
+        <Button
+          aria-label={t('editor.toolbar.link')}
           onClick={() => onApplyFormat('[', '](url)')}
-          type="button"
+          size="icon"
+          variant="ghost"
         >
           <GoLink size={15} />
-        </button>
+        </Button>
       </SimpleTooltip>
 
       {sep}
 
       {/* Block formats */}
       <SimpleTooltip content={t('editor.toolbar.quote')}>
-        <button className={btn} onClick={onApplyQuote} type="button">
+        <Button
+          aria-label={t('editor.toolbar.quote')}
+          onClick={onApplyQuote}
+          size="icon"
+          variant="ghost"
+        >
           <GoQuote size={15} />
-        </button>
+        </Button>
       </SimpleTooltip>
       <SimpleTooltip content={t('editor.toolbar.checkbox')}>
-        <button className={btn} onClick={onApplyCheckbox} type="button">
+        <Button
+          aria-label={t('editor.toolbar.checkbox')}
+          onClick={onApplyCheckbox}
+          size="icon"
+          variant="ghost"
+        >
           <GoTasklist size={15} />
-        </button>
+        </Button>
       </SimpleTooltip>
       <SimpleTooltip content={t('editor.toolbar.bulletList')}>
-        <button
-          className={btn}
+        <Button
+          aria-label={t('editor.toolbar.bulletList')}
           onClick={() => onApplyList('bullet')}
-          type="button"
+          size="icon"
+          variant="ghost"
         >
           <GoListUnordered size={15} />
-        </button>
+        </Button>
       </SimpleTooltip>
       <SimpleTooltip content={t('editor.toolbar.orderedList')}>
-        <button
-          className={btn}
+        <Button
+          aria-label={t('editor.toolbar.orderedList')}
           onClick={() => onApplyList('ordered')}
-          type="button"
+          size="icon"
+          variant="ghost"
         >
           <GoListOrdered size={15} />
-        </button>
+        </Button>
       </SimpleTooltip>
 
       {/* Table */}
       <div className="relative self-center">
         <SimpleTooltip content={t('editor.toolbar.table')}>
-          <button className={btn} onClick={onToggleTablePicker} type="button">
+          <Button
+            aria-label={t('editor.toolbar.table')}
+            onClick={onToggleTablePicker}
+            size="icon"
+            variant="ghost"
+          >
             <GoTable size={15} />
-          </button>
+          </Button>
         </SimpleTooltip>
         {showTablePicker && <TablePicker onApplyTable={onApplyTable} />}
       </div>
@@ -217,9 +240,14 @@ export function MarkdownToolbar({
       {/* Color */}
       <div className="relative self-center">
         <SimpleTooltip content={t('editor.toolbar.color')}>
-          <button className={btn} onClick={onToggleColorPalette} type="button">
+          <Button
+            aria-label={t('editor.toolbar.color')}
+            onClick={onToggleColorPalette}
+            size="icon"
+            variant="ghost"
+          >
             <FiDroplet size={15} />
-          </button>
+          </Button>
         </SimpleTooltip>
         {showColorPalette && <ColorPalette onApplyColor={onApplyColor} />}
       </div>
@@ -227,9 +255,14 @@ export function MarkdownToolbar({
       {/* Alert */}
       <div className="relative self-center">
         <SimpleTooltip content={t('editor.toolbar.alert')}>
-          <button className={btn} onClick={onToggleAlertPalette} type="button">
+          <Button
+            aria-label={t('editor.toolbar.alert')}
+            onClick={onToggleAlertPalette}
+            size="icon"
+            variant="ghost"
+          >
             <GoInfo size={15} />
-          </button>
+          </Button>
         </SimpleTooltip>
         {showAlertPalette && <AlertPalette onApplyAlert={onApplyAlert} />}
       </div>
@@ -239,14 +272,15 @@ export function MarkdownToolbar({
       {/* 画像挿入 */}
       {onImageInsert && (
         <SimpleTooltip content={t('editor.toolbar.imageInsert')}>
-          <button
-            className={`${btn} disabled:opacity-40 disabled:cursor-not-allowed`}
+          <Button
+            aria-label={t('editor.toolbar.imageInsert')}
             disabled={isImageInserting}
             onClick={onImageInsert}
-            type="button"
+            size="icon"
+            variant="ghost"
           >
             <FiImage size={15} />
-          </button>
+          </Button>
         </SimpleTooltip>
       )}
 
@@ -255,11 +289,12 @@ export function MarkdownToolbar({
         <div className="ml-auto flex items-center gap-0.5">
           {sep}
           <div className="relative self-center" ref={exportButtonRef}>
-            <button
-              className={`${btn} disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1 px-2 text-xs font-medium`}
+            <Button
+              className="gap-1 px-2 text-xs font-medium"
               disabled={isExporting}
               onClick={() => setShowExportMenu(prev => !prev)}
-              type="button"
+              size="sm"
+              variant="ghost"
             >
               <span>
                 {isExporting
@@ -267,7 +302,7 @@ export function MarkdownToolbar({
                   : t('editor.toolbar.export')}
               </span>
               <FiChevronDown size={12} />
-            </button>
+            </Button>
             {showExportMenu && (
               <ExportMenu
                 onClose={() => setShowExportMenu(false)}

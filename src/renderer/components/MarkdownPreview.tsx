@@ -179,7 +179,7 @@ export function MarkdownPreview({
           .catch((err: unknown) => {
             const errorMessage =
               err instanceof Error ? err.message : String(err)
-            el.innerHTML = `<pre style="color:#dc2626;background:#fef2f2;border:1px solid #fecaca;border-radius:6px;padding:10px 14px;font-size:0.8rem;white-space:pre-wrap;overflow-x:auto;">${errorMessage}</pre>`
+            el.innerHTML = `<pre style="color:var(--destructive);background:color-mix(in srgb, var(--destructive) 8%, transparent);border:1px solid color-mix(in srgb, var(--destructive) 30%, transparent);border-radius:var(--radius-md);padding:10px 14px;font-size:0.8rem;white-space:pre-wrap;overflow-x:auto;">${errorMessage}</pre>`
           })
           .finally(() => {
             // mermaid.render() がエラー時に document.body へ残す要素を確実に削除

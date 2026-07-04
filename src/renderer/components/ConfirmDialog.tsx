@@ -1,5 +1,7 @@
 import { useTranslation } from 'react-i18next'
 import { FiAlertTriangle } from 'react-icons/fi'
+import { Dialog } from './ui/dialog'
+import { Button } from './ui/button'
 
 interface ConfirmDialogProps {
   isOpen: boolean
@@ -25,57 +27,35 @@ export function ConfirmDialog({
   const { t } = useTranslation()
   const defaultConfirmText = confirmText || t('common.confirm')
   const defaultCancelText = cancelText || t('common.cancel')
-  if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-white dark:bg-gray-900 rounded-lg shadow-xl max-w-md w-full mx-4">
-        <div className="p-6">
-          <div className="flex items-start gap-3 mb-4">
-            {isDanger && (
-              <FiAlertTriangle
-                className="text-red-500 flex-shrink-0 mt-0.5"
-                size={24}
-              />
-            )}
-            <div className="flex-1">
-              <h2 className="text-lg font-semibold mb-2">{title}</h2>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                {message}
-              </p>
-            </div>
-          </div>
-          <div className="flex justify-end gap-3">
-            <button
-              className="px-4 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800"
-              onClick={onCancel}
-              type="button"
-            >
-              {defaultCancelText}
-            </button>
-            <button
-              className={`px-4 py-2 text-sm rounded-lg text-white ${
-                isDanger ? 'bg-red-600 hover:bg-red-700' : ''
-              }`}
-              onClick={onConfirm}
-              onMouseEnter={e => {
-                if (!isDanger)
-                  e.currentTarget.style.background = 'var(--theme-accent-hover)'
-              }}
-              onMouseLeave={e => {
-                if (!isDanger)
-                  e.currentTarget.style.background = 'var(--theme-accent)'
-              }}
-              style={
-                !isDanger ? { background: 'var(--theme-accent)' } : undefined
-              }
-              type="button"
-            >
-              {defaultConfirmText}
-            </button>
-          </div>
-        </div>
+    <Dialog
+      onOpenChange={open => {
+        if (!open) onCancel()
+      }}
+      open={isOpen}
+      title={title}
+    >
+      <div className="flex items-start gap-3">
+        {isDanger && (
+          <FiAlertTriangle
+            className="text-destructive flex-shrink-0 mt-0.5"
+            size={24}
+          />
+        )}
+        <p className="text-sm text-muted-foreground">{message}</p>
       </div>
-    </div>
+      <div className="flex justify-end gap-3 mt-4">
+        <Button onClick={onCancel} variant="secondary">
+          {defaultCancelText}
+        </Button>
+        <Button
+          onClick={onConfirm}
+          variant={isDanger ? 'destructive' : 'primary'}
+        >
+          {defaultConfirmText}
+        </Button>
+      </div>
+    </Dialog>
   )
 }

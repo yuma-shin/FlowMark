@@ -62,6 +62,15 @@ describe('AppSettings 型', () => {
   it('rootDir がオプショナルな string である', () => {
     expectTypeOf<AppSettings['rootDir']>().toEqualTypeOf<string | undefined>()
   })
+
+  it('sidebarWidth と noteListWidth がオプショナルな number である', () => {
+    expectTypeOf<AppSettings['sidebarWidth']>().toEqualTypeOf<
+      number | undefined
+    >()
+    expectTypeOf<AppSettings['noteListWidth']>().toEqualTypeOf<
+      number | undefined
+    >()
+  })
 })
 
 describe('NoteContent 型', () => {

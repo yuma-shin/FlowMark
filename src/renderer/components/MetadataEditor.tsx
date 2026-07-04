@@ -21,7 +21,7 @@ import {
   useInteractions,
   FloatingPortal,
 } from '@floating-ui/react'
-import { SimpleTooltip } from './editor/Tooltip'
+import { SimpleTooltip } from './ui/tooltip'
 import type { FolderNode } from '@/shared/types'
 
 interface MetadataEditorProps {
@@ -223,266 +223,264 @@ export function MetadataEditor({
   })
 
   return (
-    <div className="border-b border-gray-200 dark:border-gray-700 p-3 bg-background">
-      <div className="space-y-2">
-        <div>
-          <input
-            className="w-full text-xl font-bold bg-transparent border-none focus:outline-none focus:ring-0 p-0 text-gray-800 dark:text-gray-100"
-            id="meta-title"
-            onChange={e => setEditTitle(e.target.value)}
-            placeholder={t('metadata.titlePlaceholder')}
-            type="text"
-            value={editTitle}
-          />
-        </div>
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
-            {onMove && folderTree && (
-              <>
-                <SimpleTooltip content={t('metadata.moveFolder')}>
-                  <button
-                    ref={refs.setReference}
-                    type="button"
-                    {...getReferenceProps()}
-                    className="flex items-center gap-1.5 px-2 py-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded transition-colors"
+    <div className="border-b border-border bg-background h-22 flex flex-col px-3">
+      <div className="pt-2">
+        <input
+          className="w-full text-xl font-bold bg-transparent border-none focus:outline-none focus:ring-0 p-0 text-foreground leading-tight"
+          id="meta-title"
+          onChange={e => setEditTitle(e.target.value)}
+          placeholder={t('metadata.titlePlaceholder')}
+          type="text"
+          value={editTitle}
+        />
+      </div>
+      <div className="flex-1 min-h-0 flex items-center justify-between gap-3">
+        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+          {onMove && folderTree && (
+            <>
+              <SimpleTooltip content={t('metadata.moveFolder')}>
+                <button
+                  ref={refs.setReference}
+                  type="button"
+                  {...getReferenceProps()}
+                  className="flex items-center gap-1.5 px-2 py-1 hover:bg-accent rounded transition-colors"
+                >
+                  <FiFolder size={12} />
+                  <span className="text-muted-foreground">
+                    {currentFolder || t('metadata.root')}
+                  </span>
+                </button>
+              </SimpleTooltip>
+              <span className="text-muted-foreground/70">/</span>
+              {isMenuOpen && (
+                <FloatingPortal>
+                  <div
+                    ref={refs.setFloating}
+                    style={floatingStyles}
+                    {...getFloatingProps()}
+                    className="z-50 w-64 max-h-80 overflow-y-auto bg-popover border border-border rounded-lg shadow-[var(--elevation-md)] py-1"
                   >
-                    <FiFolder size={12} />
-                    <span className="text-gray-600 dark:text-gray-400">
-                      {currentFolder || t('metadata.root')}
-                    </span>
-                  </button>
-                </SimpleTooltip>
-                <span className="text-gray-400 dark:text-gray-500">/</span>
-                {isMenuOpen && (
-                  <FloatingPortal>
-                    <div
-                      ref={refs.setFloating}
-                      style={floatingStyles}
-                      {...getFloatingProps()}
-                      className="z-50 w-64 max-h-80 overflow-y-auto bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg py-1"
-                    >
-                      {visibleFolders.map(folder => {
-                        const isExpanded = expandedFolders.has(folder.path)
-                        return (
-                          <div
-                            className={`w-full text-left text-sm transition-colors flex items-center ${
+                    {visibleFolders.map(folder => {
+                      const isExpanded = expandedFolders.has(folder.path)
+                      return (
+                        <div
+                          className={`w-full text-left text-sm transition-colors flex items-center ${
+                            folder.path === currentFolder
+                              ? ''
+                              : 'text-foreground'
+                          }`}
+                          key={folder.path}
+                          style={{
+                            paddingLeft: `${folder.depth * 12 + 8}px`,
+                            ...(folder.path === currentFolder
+                              ? {
+                                  background: 'var(--theme-accent-subtle)',
+                                  color: 'var(--theme-accent)',
+                                }
+                              : {}),
+                          }}
+                        >
+                          <div className="w-7 flex-shrink-0 flex items-center justify-center">
+                            {folder.hasChildren && (
+                              <button
+                                className="p-1 hover:bg-accent rounded"
+                                onClick={e => toggleFolder(folder.path, e)}
+                                type="button"
+                              >
+                                {isExpanded ? (
+                                  <FiChevronDown size={14} />
+                                ) : (
+                                  <FiChevronRight size={14} />
+                                )}
+                              </button>
+                            )}
+                          </div>
+                          <button
+                            className={`flex-1 px-2 py-2 text-left flex items-center gap-2 ${
                               folder.path === currentFolder
-                                ? ''
-                                : 'text-gray-700 dark:text-gray-300'
+                                ? 'cursor-not-allowed'
+                                : 'hover:bg-accent'
                             }`}
-                            key={folder.path}
-                            style={{
-                              paddingLeft: `${folder.depth * 12 + 8}px`,
-                              ...(folder.path === currentFolder
+                            disabled={folder.path === currentFolder}
+                            onClick={() => handleMoveToFolder(folder.path)}
+                            type="button"
+                          >
+                            <FiFolder size={14} />
+                            <span>{folder.name}</span>
+                          </button>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </FloatingPortal>
+              )}
+            </>
+          )}
+          <FiFile size={12} />
+          <span>{filePath.split(/[\\\\/]/).pop()}</span>
+        </div>
+        <div className="flex flex-wrap gap-1.5 items-center">
+          {editTags.length === 0 && !showTagInput ? (
+            <button
+              className="text-xs text-muted-foreground transition-colors flex items-center gap-1"
+              onClick={() => setShowTagInput(true)}
+              onMouseEnter={e => {
+                e.currentTarget.style.color = 'var(--theme-accent)'
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.color = ''
+              }}
+              type="button"
+            >
+              <FiPlus size={12} />
+              {t('metadata.clickCreateTag')}
+            </button>
+          ) : (
+            <>
+              {editTags.map((tag: string) => (
+                <span
+                  className={`px-1.5 py-0.5 text-xs rounded font-medium flex items-center gap-1 ${
+                    removingTags.has(tag)
+                      ? 'animate-out zoom-out-50 fade-out duration-150'
+                      : newlyAddedTag === tag
+                        ? 'animate-in zoom-in-50 fade-in duration-200'
+                        : ''
+                  }`}
+                  key={tag}
+                  style={{
+                    background: 'var(--theme-accent-subtle)',
+                    color: 'var(--theme-accent)',
+                  }}
+                >
+                  {tag}
+                  <button
+                    className="hover:text-destructive transition-colors"
+                    onClick={e => {
+                      e.stopPropagation()
+                      handleRemoveTag(tag)
+                    }}
+                    type="button"
+                  >
+                    <FiX size={12} />
+                  </button>
+                </span>
+              ))}
+              {showTagInput && (
+                <div ref={suggestionRefs.setReference}>
+                  <form onSubmit={handleFormSubmit}>
+                    <input
+                      className="w-32 px-1.5 py-0.5 text-xs border border-border rounded bg-background focus:outline-none focus:ring-1"
+                      onBlur={e => {
+                        // サジェストリスト内へのフォーカス移動はblurとして扱わない
+                        if (
+                          suggestionRefs.floating.current?.contains(
+                            e.relatedTarget as Node
+                          )
+                        ) {
+                          return
+                        }
+                        if (!newTag.trim()) {
+                          setShowTagInput(false)
+                        }
+                      }}
+                      onChange={e => {
+                        setNewTag(e.target.value)
+                        setActiveSuggestionIndex(-1)
+                      }}
+                      onKeyDown={e => {
+                        if (e.key === 'Escape') {
+                          setNewTag('')
+                          setShowTagInput(false)
+                        } else if (e.key === 'ArrowDown') {
+                          e.preventDefault()
+                          setActiveSuggestionIndex(prev =>
+                            Math.min(prev + 1, filteredSuggestions.length - 1)
+                          )
+                        } else if (e.key === 'ArrowUp') {
+                          e.preventDefault()
+                          setActiveSuggestionIndex(prev =>
+                            Math.max(prev - 1, -1)
+                          )
+                        } else if (
+                          e.key === 'Enter' &&
+                          activeSuggestionIndex >= 0
+                        ) {
+                          e.preventDefault()
+                          handleAddTag(
+                            filteredSuggestions[activeSuggestionIndex]
+                          )
+                        }
+                      }}
+                      placeholder={t('metadata.tagPlaceholder')}
+                      ref={tagInputRef}
+                      style={
+                        {
+                          '--tw-ring-color': 'var(--theme-accent)',
+                        } as React.CSSProperties
+                      }
+                      type="text"
+                      value={newTag}
+                    />
+                  </form>
+                  {filteredSuggestions.length > 0 && (
+                    <FloatingPortal>
+                      <div
+                        className="z-50 w-48 max-h-40 overflow-y-auto bg-popover border border-border rounded-lg shadow-[var(--elevation-md)] py-1"
+                        ref={suggestionRefs.setFloating}
+                        style={suggestionFloatingStyles}
+                      >
+                        {filteredSuggestions.map((tag, index) => (
+                          <button
+                            className={`w-full text-left px-3 py-1.5 text-xs flex items-center gap-1.5 transition-colors ${
+                              index === activeSuggestionIndex
+                                ? ''
+                                : 'text-foreground hover:bg-accent'
+                            }`}
+                            key={tag}
+                            onMouseDown={e => {
+                              e.preventDefault() // blur を防いで入力欄フォーカスを維持
+                              handleAddTag(tag)
+                            }}
+                            style={
+                              index === activeSuggestionIndex
                                 ? {
                                     background: 'var(--theme-accent-subtle)',
                                     color: 'var(--theme-accent)',
                                   }
-                                : {}),
-                            }}
+                                : undefined
+                            }
+                            type="button"
                           >
-                            <div className="w-7 flex-shrink-0 flex items-center justify-center">
-                              {folder.hasChildren && (
-                                <button
-                                  className="p-1 hover:bg-gray-200 dark:hover:bg-gray-600 rounded"
-                                  onClick={e => toggleFolder(folder.path, e)}
-                                  type="button"
-                                >
-                                  {isExpanded ? (
-                                    <FiChevronDown size={14} />
-                                  ) : (
-                                    <FiChevronRight size={14} />
-                                  )}
-                                </button>
-                              )}
-                            </div>
-                            <button
-                              className={`flex-1 px-2 py-2 text-left flex items-center gap-2 ${
-                                folder.path === currentFolder
-                                  ? 'cursor-not-allowed'
-                                  : 'hover:bg-gray-100 dark:hover:bg-gray-700'
-                              }`}
-                              disabled={folder.path === currentFolder}
-                              onClick={() => handleMoveToFolder(folder.path)}
-                              type="button"
-                            >
-                              <FiFolder size={14} />
-                              <span>{folder.name}</span>
-                            </button>
-                          </div>
-                        )
-                      })}
-                    </div>
-                  </FloatingPortal>
-                )}
-              </>
-            )}
-            <FiFile size={12} />
-            <span>{filePath.split(/[\\\\/]/).pop()}</span>
-          </div>
-          <div className="flex flex-wrap gap-1.5 items-center">
-            {editTags.length === 0 && !showTagInput ? (
-              <button
-                className="text-xs text-gray-400 dark:text-gray-500 transition-colors flex items-center gap-1"
-                onClick={() => setShowTagInput(true)}
-                onMouseEnter={e => {
-                  e.currentTarget.style.color = 'var(--theme-accent)'
-                }}
-                onMouseLeave={e => {
-                  e.currentTarget.style.color = ''
-                }}
-                type="button"
-              >
-                <FiPlus size={12} />
-                {t('metadata.clickCreateTag')}
-              </button>
-            ) : (
-              <>
-                {editTags.map((tag: string) => (
-                  <span
-                    className={`px-1.5 py-0.5 text-xs rounded font-medium flex items-center gap-1 ${
-                      removingTags.has(tag)
-                        ? 'animate-out zoom-out-50 fade-out duration-150'
-                        : newlyAddedTag === tag
-                          ? 'animate-in zoom-in-50 fade-in duration-200'
-                          : ''
-                    }`}
-                    key={tag}
-                    style={{
-                      background: 'var(--theme-accent-subtle)',
-                      color: 'var(--theme-accent)',
+                            <FiTag className="flex-shrink-0" size={10} />
+                            <span className="truncate">{tag}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </FloatingPortal>
+                  )}
+                </div>
+              )}
+              {editTags.length > 0 && !showTagInput && (
+                <SimpleTooltip content={t('metadata.addTagButton')}>
+                  <button
+                    className="p-0.5 rounded transition-colors"
+                    onClick={() => setShowTagInput(true)}
+                    onMouseEnter={e => {
+                      e.currentTarget.style.background =
+                        'var(--theme-accent-subtle)'
                     }}
+                    onMouseLeave={e => {
+                      e.currentTarget.style.background = ''
+                    }}
+                    style={{ color: 'var(--theme-accent)' }}
+                    type="button"
                   >
-                    {tag}
-                    <button
-                      className="hover:text-red-600 dark:hover:text-red-400 transition-colors"
-                      onClick={e => {
-                        e.stopPropagation()
-                        handleRemoveTag(tag)
-                      }}
-                      type="button"
-                    >
-                      <FiX size={12} />
-                    </button>
-                  </span>
-                ))}
-                {showTagInput && (
-                  <div ref={suggestionRefs.setReference}>
-                    <form onSubmit={handleFormSubmit}>
-                      <input
-                        className="w-32 px-1.5 py-0.5 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 focus:outline-none focus:ring-1"
-                        onBlur={e => {
-                          // サジェストリスト内へのフォーカス移動はblurとして扱わない
-                          if (
-                            suggestionRefs.floating.current?.contains(
-                              e.relatedTarget as Node
-                            )
-                          ) {
-                            return
-                          }
-                          if (!newTag.trim()) {
-                            setShowTagInput(false)
-                          }
-                        }}
-                        onChange={e => {
-                          setNewTag(e.target.value)
-                          setActiveSuggestionIndex(-1)
-                        }}
-                        onKeyDown={e => {
-                          if (e.key === 'Escape') {
-                            setNewTag('')
-                            setShowTagInput(false)
-                          } else if (e.key === 'ArrowDown') {
-                            e.preventDefault()
-                            setActiveSuggestionIndex(prev =>
-                              Math.min(prev + 1, filteredSuggestions.length - 1)
-                            )
-                          } else if (e.key === 'ArrowUp') {
-                            e.preventDefault()
-                            setActiveSuggestionIndex(prev =>
-                              Math.max(prev - 1, -1)
-                            )
-                          } else if (
-                            e.key === 'Enter' &&
-                            activeSuggestionIndex >= 0
-                          ) {
-                            e.preventDefault()
-                            handleAddTag(
-                              filteredSuggestions[activeSuggestionIndex]
-                            )
-                          }
-                        }}
-                        placeholder={t('metadata.tagPlaceholder')}
-                        ref={tagInputRef}
-                        style={
-                          {
-                            '--tw-ring-color': 'var(--theme-accent)',
-                          } as React.CSSProperties
-                        }
-                        type="text"
-                        value={newTag}
-                      />
-                    </form>
-                    {filteredSuggestions.length > 0 && (
-                      <FloatingPortal>
-                        <div
-                          className="z-50 w-48 max-h-40 overflow-y-auto bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg py-1"
-                          ref={suggestionRefs.setFloating}
-                          style={suggestionFloatingStyles}
-                        >
-                          {filteredSuggestions.map((tag, index) => (
-                            <button
-                              className={`w-full text-left px-3 py-1.5 text-xs flex items-center gap-1.5 transition-colors ${
-                                index === activeSuggestionIndex
-                                  ? ''
-                                  : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-                              }`}
-                              key={tag}
-                              onMouseDown={e => {
-                                e.preventDefault() // blur を防いで入力欄フォーカスを維持
-                                handleAddTag(tag)
-                              }}
-                              style={
-                                index === activeSuggestionIndex
-                                  ? {
-                                      background: 'var(--theme-accent-subtle)',
-                                      color: 'var(--theme-accent)',
-                                    }
-                                  : undefined
-                              }
-                              type="button"
-                            >
-                              <FiTag className="flex-shrink-0" size={10} />
-                              <span className="truncate">{tag}</span>
-                            </button>
-                          ))}
-                        </div>
-                      </FloatingPortal>
-                    )}
-                  </div>
-                )}
-                {editTags.length > 0 && !showTagInput && (
-                  <SimpleTooltip content={t('metadata.addTagButton')}>
-                    <button
-                      className="p-0.5 rounded transition-colors"
-                      onClick={() => setShowTagInput(true)}
-                      onMouseEnter={e => {
-                        e.currentTarget.style.background =
-                          'var(--theme-accent-subtle)'
-                      }}
-                      onMouseLeave={e => {
-                        e.currentTarget.style.background = ''
-                      }}
-                      style={{ color: 'var(--theme-accent)' }}
-                      type="button"
-                    >
-                      <FiPlus size={14} />
-                    </button>
-                  </SimpleTooltip>
-                )}
-              </>
-            )}
-          </div>
+                    <FiPlus size={14} />
+                  </button>
+                </SimpleTooltip>
+              )}
+            </>
+          )}
         </div>
       </div>
     </div>

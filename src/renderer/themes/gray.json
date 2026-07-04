@@ -22,7 +22,7 @@
     "--accent": "oklch(0.92 0 0)",
     "--accent-foreground": "oklch(0.18 0 0)",
     "--destructive": "oklch(0.577 0.245 27.325)",
-    "--destructive-foreground": "oklch(0.577 0.245 27.325)",
+    "--destructive-foreground": "oklch(0.98 0 0)",
     "--border": "oklch(0.88 0 0)",
     "--input": "oklch(0.88 0 0)",
     "--ring": "oklch(0.6 0 0)",

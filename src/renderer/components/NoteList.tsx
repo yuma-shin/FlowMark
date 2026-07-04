@@ -3,7 +3,8 @@ import { useTranslation } from 'react-i18next'
 import { FiFileText, FiPlus, FiSearch, FiX } from 'react-icons/fi'
 import { useVirtualizer } from '@tanstack/react-virtual'
 import type { MarkdownNoteMeta } from '@/shared/types'
-import { SimpleTooltip } from './editor/Tooltip'
+import { SimpleTooltip } from './ui/tooltip'
+import { Button } from './ui/button'
 import { NoteItem } from './NoteItem'
 import { SortDropdown, type SortOption } from './SortDropdown'
 import { tauriApi as App } from '@/renderer/lib/tauriApi'
@@ -15,6 +16,8 @@ interface NoteListProps {
   onSelectNote: (note: MarkdownNoteMeta) => void
   onCreateNote?: () => void
   onDeleteNote?: (note: MarkdownNoteMeta) => void
+  /** 指定時はpxで幅を固定する（未指定時は既存の固定幅クラスを使用） */
+  width?: number
 }
 
 export function NoteList({
@@ -24,6 +27,7 @@ export function NoteList({
   onSelectNote,
   onCreateNote,
   onDeleteNote,
+  width,
 }: NoteListProps) {
   const { t } = useTranslation()
   const [searchQuery, setSearchQuery] = useState('')
@@ -100,73 +104,72 @@ export function NoteList({
   }
 
   return (
-    <div className="w-80 border-r border-gray-200 dark:border-gray-700 overflow-y-auto bg-background flex flex-col">
+    <div
+      className={`${width === undefined ? 'w-80' : ''} border-r border-border overflow-y-auto bg-background flex flex-col`}
+      style={width === undefined ? undefined : { width }}
+    >
       <div
-        className="flex-shrink-0 h-12 flex items-center justify-between border-b border-gray-200 dark:border-gray-700 px-4"
+        className="border-b border-border flex-shrink-0 h-22 flex flex-col"
         style={{
           background:
-            'linear-gradient(to bottom, rgba(102, 126, 234, 0.05), transparent)',
+            'linear-gradient(to bottom, var(--theme-accent-subtle), transparent)',
         }}
       >
-        <div className="flex items-center gap-2">
-          <h2 className="text-sm font-bold text-gray-800 dark:text-gray-100 flex items-center gap-2">
-            <FiFileText size={16} style={{ color: 'var(--theme-accent)' }} />
-            {getFolderDisplayName()}
-          </h2>
-          <span className="text-xs text-gray-500 dark:text-gray-400 font-medium px-2 py-0.5 bg-gray-100 dark:bg-gray-800 rounded-full">
-            {filteredAndSortedNotes.length}
-          </span>
-        </div>
-        {onCreateNote && (
-          <SimpleTooltip content={t('noteList.createNoteButton')}>
-            <button
-              className="p-2 rounded-lg transition-all duration-200 shadow-sm hover:shadow"
-              onClick={onCreateNote}
-              onMouseEnter={e => {
-                e.currentTarget.style.background = 'var(--theme-accent-subtle)'
-              }}
-              onMouseLeave={e => {
-                e.currentTarget.style.background = ''
-              }}
-              style={{ color: 'var(--theme-accent)' }}
-              type="button"
-            >
-              <FiPlus size={16} />
-            </button>
-          </SimpleTooltip>
-        )}
-      </div>
-
-      {/* 検索バー & ソートボタン */}
-      <div className="flex-shrink-0 px-3 py-2 border-b border-gray-200 dark:border-gray-700 bg-muted/50">
-        <div className="flex gap-2">
-          <SortDropdown onChange={setSortOption} value={sortOption} />
-          <div className="flex-1 relative">
-            <FiSearch
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500"
-              size={14}
-            />
-            <input
-              className="w-full pl-9 pr-8 py-1.5 text-sm bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:border-transparent text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500"
-              onChange={e => setSearchQuery(e.target.value)}
-              placeholder={t('noteList.searchPlaceholder')}
-              style={
-                {
-                  '--tw-ring-color': 'var(--theme-accent)',
-                } as React.CSSProperties
-              }
-              type="text"
-              value={searchQuery}
-            />
-            {searchQuery && (
-              <button
-                className="absolute right-2 top-1/2 -translate-y-1/2 p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300"
-                onClick={() => setSearchQuery('')}
-                type="button"
+        <div className="h-12 flex items-center justify-between px-4">
+          <div className="flex items-center gap-2">
+            <h2 className="text-heading-sm text-foreground flex items-center gap-2">
+              <FiFileText size={16} style={{ color: 'var(--theme-accent)' }} />
+              {getFolderDisplayName()}
+            </h2>
+            <span className="text-xs text-muted-foreground font-medium px-2 py-0.5 bg-muted rounded-full">
+              {filteredAndSortedNotes.length}
+            </span>
+          </div>
+          {onCreateNote && (
+            <SimpleTooltip content={t('noteList.createNoteButton')}>
+              <Button
+                aria-label={t('noteList.createNoteButton')}
+                onClick={onCreateNote}
+                size="icon"
+                variant="ghost"
               >
-                <FiX size={12} />
-              </button>
-            )}
+                <FiPlus size={16} />
+              </Button>
+            </SimpleTooltip>
+          )}
+        </div>
+
+        {/* 検索バー & ソートボタン */}
+        <div className="flex-1 min-h-0 flex items-center px-3">
+          <div className="flex w-full gap-2">
+            <SortDropdown onChange={setSortOption} value={sortOption} />
+            <div className="flex-1 relative">
+              <FiSearch
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+                size={14}
+              />
+              <input
+                className="w-full pl-9 pr-8 py-0.5 text-sm bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent text-foreground placeholder-muted-foreground"
+                onChange={e => setSearchQuery(e.target.value)}
+                placeholder={t('noteList.searchPlaceholder')}
+                style={
+                  {
+                    '--tw-ring-color': 'var(--theme-accent)',
+                  } as React.CSSProperties
+                }
+                type="text"
+                value={searchQuery}
+              />
+              {searchQuery && (
+                <button
+                  className="absolute right-2 top-1/2 -translate-y-1/2 p-1 hover:bg-accent rounded text-muted-foreground hover:text-foreground"
+                  onClick={() => setSearchQuery('')}
+                  type="button"
+                >
+                  <FiX size={12} />
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -191,6 +194,7 @@ export function NoteList({
                   top: 0,
                   left: 0,
                   width: '100%',
+                  marginTop: '5px',
                   transform: `translateY(${virtualItem.start}px)`,
                 }}
               >
@@ -396,23 +400,29 @@ export function NoteList({
                 />
               </g>
             </svg>
-            <p className="text-sm text-gray-400 dark:text-gray-500 font-medium">
+            <p className="text-sm text-muted-foreground font-medium">
               {t('noteList.noNotesInFolder')}
             </p>
-            <p className="text-xs text-gray-400 dark:text-gray-600 mt-2">
+            <p className="text-xs text-muted-foreground/70 mt-2">
               {t('noteList.noNotesHint')}
             </p>
+            {onCreateNote && (
+              <Button className="mt-4" onClick={onCreateNote} size="sm">
+                <FiPlus size={14} />
+                {t('noteList.createNoteButton')}
+              </Button>
+            )}
           </div>
         ) : (
           <div className="p-8 text-center">
             <FiSearch
-              className="mx-auto mb-4 text-gray-300 dark:text-gray-600"
+              className="mx-auto mb-4 text-muted-foreground/60"
               size={48}
             />
-            <p className="text-sm text-gray-400 dark:text-gray-500 font-medium">
+            <p className="text-sm text-muted-foreground font-medium">
               検索結果が見つかりません
             </p>
-            <p className="text-xs text-gray-400 dark:text-gray-600 mt-2">
+            <p className="text-xs text-muted-foreground/70 mt-2">
               別のキーワードで検索してみてください
             </p>
           </div>

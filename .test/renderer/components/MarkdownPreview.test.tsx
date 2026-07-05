@@ -3,7 +3,7 @@
  * 主に Mermaid ダイアグラムのテーマ対応を検証する
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { render, act } from '@testing-library/react'
+import { render, act, cleanup } from '@testing-library/react'
 import React from 'react'
 
 // ---- Mermaid モック ----
@@ -63,6 +63,7 @@ describe('MarkdownPreview - Mermaid テーマ切替', () => {
   })
 
   afterEach(() => {
+    cleanup()
     document.documentElement.classList.remove('dark')
   })
 

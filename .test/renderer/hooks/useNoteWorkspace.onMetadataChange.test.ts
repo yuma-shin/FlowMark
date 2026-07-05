@@ -77,7 +77,13 @@ describe('useNoteWorkspace.onMetadataChange', () => {
       rawContent,
     })
 
-    const { result } = renderHookWithProviders(() => useNoteWorkspace())
+    const { result } = renderHookWithProviders(() =>
+      useNoteWorkspace({
+        rootDir: undefined,
+        rootMeta: {},
+        onMetaChange: vi.fn(),
+      })
+    )
 
     await act(async () => {
       await result.current.onSelectNote(NOTE)
@@ -105,7 +111,13 @@ describe('useNoteWorkspace.onMetadataChange', () => {
       rawContent,
     })
 
-    const { result } = renderHookWithProviders(() => useNoteWorkspace())
+    const { result } = renderHookWithProviders(() =>
+      useNoteWorkspace({
+        rootDir: undefined,
+        rootMeta: {},
+        onMetaChange: vi.fn(),
+      })
+    )
 
     await act(async () => {
       await result.current.onSelectNote(NOTE)

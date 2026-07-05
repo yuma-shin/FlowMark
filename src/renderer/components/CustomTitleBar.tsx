@@ -1,24 +1,28 @@
 import { useEffect, useState } from 'react'
 import {
-  FiMinus,
-  FiMaximize,
-  FiMinimize,
-  FiX,
-  FiFolder,
-  FiSidebar,
-  FiList,
-} from 'react-icons/fi'
+  LuMinus,
+  LuMaximize,
+  LuMinimize,
+  LuX,
+  LuPanelLeft,
+  LuList,
+} from 'react-icons/lu'
+import { ICON_SIZE } from '@/renderer/lib/iconConstants'
 import { useTranslation } from 'react-i18next'
-import { useApp } from '../contexts/AppContext'
 import { SimpleTooltip } from './ui/tooltip'
 import { Button } from './ui/button'
 import { ThemeToggle } from './ThemeToggle'
 import { LanguageToggle } from './LanguageToggle'
 import { ColorThemeSelector } from './ColorThemeSelector'
+import { FontFamilySelector } from './FontFamilySelector'
+import {
+  RootFolderTabBar,
+  type RootFolderTabBarProps,
+} from './RootFolderTabBar'
 import { tauriApi as App } from '@/renderer/lib/tauriApi'
 
 interface CustomTitleBarProps {
-  onChangeRootFolder?: () => void
+  tabBar?: RootFolderTabBarProps
   showSidebar?: boolean
   showNoteList?: boolean
   onToggleSidebar?: () => void
@@ -26,14 +30,13 @@ interface CustomTitleBarProps {
 }
 
 export function CustomTitleBar({
-  onChangeRootFolder,
+  tabBar,
   showSidebar,
   showNoteList,
   onToggleSidebar,
   onToggleNoteList,
 }: CustomTitleBarProps) {
   const [isMaximized, setIsMaximized] = useState(false)
-  const { settings } = useApp()
   const { t } = useTranslation()
   const isMac =
     App.platform === 'darwin' ||
@@ -56,13 +59,6 @@ export function CustomTitleBar({
 
   const handleClose = async () => {
     await App.window.close()
-  }
-
-  // ルートフォルダ名を取得
-  const getRootFolderName = () => {
-    if (!settings.rootDir) return ''
-    const parts = settings.rootDir.split(/[\\/]/)
-    return parts[parts.length - 1]
   }
 
   // NotyraロゴSVG
@@ -125,59 +121,48 @@ export function CustomTitleBar({
     <div className="h-11 flex items-center justify-between border-b border-border select-none relative z-50 bg-background">
       {/* ドラッグ可能な領域 */}
       <div
-        className="flex-1 h-full drag-region flex items-center"
+        className="flex-1 min-w-0 h-full drag-region flex items-center"
         data-tauri-drag-region
       >
         <div
-          className={`flex items-center h-full gap-3 ${isMac ? 'pl-[80px] pr-4' : 'px-4'}`}
+          className={`flex items-center h-full min-w-0 gap-3 ${isMac ? 'pl-[80px] pr-4' : 'px-4'}`}
           data-tauri-drag-region
         >
-          <div className="flex items-center gap-2" data-tauri-drag-region>
+          <div
+            className="flex items-center gap-2 flex-shrink-0"
+            data-tauri-drag-region
+          >
             <NotyraLogo />
           </div>
-          {settings.rootDir && (
+          {tabBar && (
             <>
               <div
-                className="w-px h-4 bg-border mx-0.5"
+                className="w-px h-4 bg-border mx-0.5 flex-shrink-0"
                 data-tauri-drag-region
               />
-              <div className="flex items-center gap-1.5">
-                <FiFolder className="text-muted-foreground" size={14} />
-                <span className="text-sm text-foreground font-medium">
-                  {getRootFolderName()}
-                </span>
-                {onChangeRootFolder && (
-                  <SimpleTooltip content={t('titleBar.selectFolder')}>
-                    <Button
-                      aria-label={t('titleBar.selectFolder')}
-                      className="px-2 py-0.5 h-auto text-xs font-medium"
-                      onClick={onChangeRootFolder}
-                      onMouseEnter={e => {
-                        e.currentTarget.style.backgroundColor =
-                          'var(--theme-accent-subtle-hover)'
-                      }}
-                      onMouseLeave={e => {
-                        e.currentTarget.style.backgroundColor =
-                          'var(--theme-accent-subtle)'
-                      }}
-                      style={{
-                        color: 'var(--theme-accent)',
-                        backgroundColor: 'var(--theme-accent-subtle)',
-                      }}
-                      variant="ghost"
-                    >
-                      {t('titleBar.selectFolder')}
-                    </Button>
-                  </SimpleTooltip>
-                )}
+              <div
+                className="min-w-0 flex-1 h-full"
+                data-testid="titlebar-tab-container"
+              >
+                <RootFolderTabBar {...tabBar} />
               </div>
+              {/* タブ領域はホイール操作を確実に届けるためno-dragにしているため、
+                  タブ数に関わらず常時ウィンドウをドラッグできる余白を別途確保する */}
+              <div
+                className="w-5 h-full flex-shrink-0"
+                data-tauri-drag-region
+                data-testid="titlebar-drag-spacer"
+              />
             </>
           )}
         </div>
       </div>
 
       {/* Control Buttons */}
-      <div className="flex items-center gap-0.5 mr-1.5">
+      <div
+        className="flex items-center gap-0.5 mr-1.5 flex-shrink-0"
+        data-testid="titlebar-secondary-controls"
+      >
         {onToggleSidebar && (
           <SimpleTooltip content={t('titleBar.toggleSidebar')}>
             <Button
@@ -187,9 +172,9 @@ export function CustomTitleBar({
               style={{ color: showSidebar ? 'var(--theme-accent)' : undefined }}
               variant="ghost"
             >
-              <FiSidebar
+              <LuPanelLeft
                 className={showSidebar ? '' : 'text-muted-foreground'}
-                size={16}
+                size={ICON_SIZE.TITLEBAR}
               />
             </Button>
           </SimpleTooltip>
@@ -205,31 +190,36 @@ export function CustomTitleBar({
               }}
               variant="ghost"
             >
-              <FiList
+              <LuList
                 className={showNoteList ? '' : 'text-muted-foreground'}
-                size={16}
+                size={ICON_SIZE.TITLEBAR}
               />
             </Button>
           </SimpleTooltip>
         )}
         <div className="w-px h-4 bg-border mx-0.5" />
+        <FontFamilySelector />
         <ColorThemeSelector />
-        <div className="scale-90">
-          <ThemeToggle />
-        </div>
+        <ThemeToggle />
         <LanguageToggle />
       </div>
 
       {/* ウィンドウ操作ボタン (Windows のみ) */}
       {!isMac && (
-        <div className="flex items-center gap-0.5 mr-1.5">
+        <div
+          className="flex items-center gap-0.5 mr-1.5 flex-shrink-0"
+          data-testid="titlebar-window-controls"
+        >
           <Button
             aria-label={t('titleBar.minimize')}
             onClick={handleMinimize}
             size="icon"
             variant="ghost"
           >
-            <FiMinus className="text-muted-foreground" size={16} />
+            <LuMinus
+              className="text-muted-foreground"
+              size={ICON_SIZE.TITLEBAR}
+            />
           </Button>
           <Button
             aria-label={t('titleBar.maximize')}
@@ -238,9 +228,15 @@ export function CustomTitleBar({
             variant="ghost"
           >
             {isMaximized ? (
-              <FiMinimize className="text-muted-foreground" size={16} />
+              <LuMinimize
+                className="text-muted-foreground"
+                size={ICON_SIZE.TITLEBAR}
+              />
             ) : (
-              <FiMaximize className="text-muted-foreground" size={16} />
+              <LuMaximize
+                className="text-muted-foreground"
+                size={ICON_SIZE.TITLEBAR}
+              />
             )}
           </Button>
           <Button
@@ -250,9 +246,9 @@ export function CustomTitleBar({
             size="icon"
             variant="ghost"
           >
-            <FiX
+            <LuX
               className="text-muted-foreground group-hover:text-white"
-              size={16}
+              size={ICON_SIZE.TITLEBAR}
             />
           </Button>
         </div>

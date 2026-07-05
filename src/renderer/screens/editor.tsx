@@ -29,6 +29,8 @@ export function EditorScreen() {
   const lastLocalWriteTimeRef = useRef<number>(0)
   const reloadTimeoutRef = useRef<number | undefined>(undefined)
   const { settings } = useApp()
+  const rootParam = searchParams.get('root')
+  const rootDir = rootParam ? decodeURIComponent(rootParam) : undefined
   const editorStats = useEditorStatus(noteContent)
   const version = useAppVersion()
   const [cursor, setCursor] = useState<EditorCursorPosition | null>(null)
@@ -203,7 +205,7 @@ export function EditorScreen() {
           onLayoutModeChange={setLayoutMode}
           onSaveErrorDismiss={() => setSaveError(null)}
           onSelectionStatsChange={setSelectionStats}
-          rootDir={settings.rootDir}
+          rootDir={rootDir}
           saveError={saveError}
         />
       </div>

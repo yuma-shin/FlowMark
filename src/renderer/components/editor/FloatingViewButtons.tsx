@@ -1,7 +1,8 @@
 import { useTranslation } from 'react-i18next'
-import { FiEdit3, FiEye, FiColumns } from 'react-icons/fi'
+import { LuPencil, LuEye, LuColumns2 } from 'react-icons/lu'
 import { SimpleTooltip } from '../ui/tooltip'
 import { Button } from '../ui/button'
+import { ICON_SIZE } from '@/renderer/lib/iconConstants'
 import type { AppSettings } from '@/shared/types'
 
 interface FloatingViewButtonsProps {
@@ -23,17 +24,17 @@ export function FloatingViewButtons({
     {
       mode: 'editor',
       label: t('editor.layoutMode.editorOnly'),
-      icon: <FiEdit3 size={16} />,
+      icon: <LuPencil size={ICON_SIZE.TITLEBAR} />,
     },
     {
       mode: 'split',
       label: t('editor.layoutMode.splitView'),
-      icon: <FiColumns size={16} />,
+      icon: <LuColumns2 size={ICON_SIZE.TITLEBAR} />,
     },
     {
       mode: 'preview',
       label: t('editor.layoutMode.previewOnly'),
-      icon: <FiEye size={16} />,
+      icon: <LuEye size={ICON_SIZE.TITLEBAR} />,
     },
   ]
 

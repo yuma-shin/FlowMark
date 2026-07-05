@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next'
-import { FiAlertTriangle } from 'react-icons/fi'
+import { LuTriangleAlert } from 'react-icons/lu'
 import { Dialog } from './ui/dialog'
 import { Button } from './ui/button'
 
@@ -38,7 +38,7 @@ export function ConfirmDialog({
     >
       <div className="flex items-start gap-3">
         {isDanger && (
-          <FiAlertTriangle
+          <LuTriangleAlert
             className="text-destructive flex-shrink-0 mt-0.5"
             size={24}
           />

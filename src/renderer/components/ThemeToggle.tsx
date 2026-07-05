@@ -1,4 +1,4 @@
-import { FiSun, FiMoon, FiMonitor } from 'react-icons/fi'
+import { LuSun, LuMoon, LuMonitor } from 'react-icons/lu'
 import { useTranslation } from 'react-i18next'
 import { useApp } from '../contexts/AppContext'
 import { SimpleTooltip } from './ui/tooltip'
@@ -19,11 +19,11 @@ export function ThemeToggle() {
   const getIcon = () => {
     switch (settings.theme) {
       case 'light':
-        return <FiSun size={16} />
+        return <LuSun size={16} />
       case 'dark':
-        return <FiMoon size={16} />
+        return <LuMoon size={16} />
       case 'system':
-        return <FiMonitor size={16} />
+        return <LuMonitor size={16} />
     }
   }
 

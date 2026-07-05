@@ -78,7 +78,13 @@ describe('useNoteWorkspace.onSelectNote のフェード待機', () => {
 
   it('前回選択中のノートが無い場合（初回選択）は150msのフェード用setTimeoutを発行しない', async () => {
     const setTimeoutSpy = vi.spyOn(window, 'setTimeout')
-    const { result } = renderHookWithProviders(() => useNoteWorkspace())
+    const { result } = renderHookWithProviders(() =>
+      useNoteWorkspace({
+        rootDir: undefined,
+        rootMeta: {},
+        onMetaChange: vi.fn(),
+      })
+    )
 
     await act(async () => {
       await result.current.onSelectNote(NOTE_A)
@@ -91,7 +97,13 @@ describe('useNoteWorkspace.onSelectNote のフェード待機', () => {
   })
 
   it('既に選択中のノートがある場合（切替時）は従来通り150msのフェード用setTimeoutを発行する', async () => {
-    const { result } = renderHookWithProviders(() => useNoteWorkspace())
+    const { result } = renderHookWithProviders(() =>
+      useNoteWorkspace({
+        rootDir: undefined,
+        rootMeta: {},
+        onMetaChange: vi.fn(),
+      })
+    )
 
     await act(async () => {
       await result.current.onSelectNote(NOTE_A)

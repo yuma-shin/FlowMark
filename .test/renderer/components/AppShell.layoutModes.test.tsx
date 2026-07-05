@@ -55,8 +55,6 @@ function createWorkspace(
     showNoteList: false,
     isNoteTransitioning: false,
     showAllNotes: false,
-    onRootFolderSelect: vi.fn(),
-    onChangeRootFolder: vi.fn(),
     onShowAllNotes: vi.fn(),
     onSelectFolder: vi.fn(),
     onSelectTag: vi.fn(),
@@ -72,21 +70,23 @@ function createWorkspace(
     onToggleNoteList: vi.fn(),
     onSaveErrorDismiss: vi.fn(),
     onLayoutModeChange: vi.fn(),
+    flushPendingSave: vi.fn().mockResolvedValue(undefined),
     ...overrides,
   }
 }
 
 function renderShell(editorLayoutMode: AppSettings['editorLayoutMode']) {
   const settings: AppSettings = {
+    rootFolders: [{ path: '/notes' }],
+    activeRootFolder: '/notes',
     editorLayoutMode,
     theme: 'system',
     colorTheme: 'gray',
     language: 'en',
-    rootDir: '/notes',
   }
   return render(
     <AppShell
-      onChangeRootFolder={vi.fn()}
+      activeRootPath="/notes"
       onCreateFolder={vi.fn()}
       onCreateNote={vi.fn()}
       onDeleteFolder={vi.fn()}
@@ -94,6 +94,13 @@ function renderShell(editorLayoutMode: AppSettings['editorLayoutMode']) {
       onNoteListWidthCommit={vi.fn()}
       onSidebarWidthCommit={vi.fn()}
       settings={settings}
+      tabBar={{
+        tabs: [{ path: '/notes', name: 'notes', status: 'ok' }],
+        activePath: '/notes',
+        onSelect: vi.fn(),
+        onClose: vi.fn(),
+        onAdd: vi.fn(),
+      }}
       workspace={createWorkspace()}
     />
   )

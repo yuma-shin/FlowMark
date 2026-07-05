@@ -1,29 +1,29 @@
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
-  FiDroplet,
-  FiImage,
-  FiDownload,
-  FiCode,
-  FiChevronDown,
-} from 'react-icons/fi'
-import {
-  GoBold,
-  GoItalic,
-  GoCodeSquare,
-  GoLink,
-  GoInfo,
-  GoListUnordered,
-  GoListOrdered,
-  GoStrikethrough,
-  GoHeading,
-  GoQuote,
-  GoTasklist,
-  GoTable,
-} from 'react-icons/go'
+  LuBold,
+  LuItalic,
+  LuSquareCode,
+  LuLink,
+  LuList,
+  LuListOrdered,
+  LuStrikethrough,
+  LuHeading,
+  LuQuote,
+  LuListChecks,
+  LuTable,
+  LuInfo,
+  LuDroplet,
+  LuImage,
+  LuDownload,
+  LuCode,
+  LuChevronDown,
+  LuLoaderCircle,
+} from 'react-icons/lu'
 import { SimpleTooltip } from '../ui/tooltip'
 import { Button } from '../ui/button'
 import { ALERT_OPTIONS } from '@/renderer/lib/alertOptions'
+import { ICON_SIZE } from '@/renderer/lib/iconConstants'
 
 type ListType = 'bullet' | 'ordered'
 
@@ -114,7 +114,7 @@ export function MarkdownToolbar({
             size="icon"
             variant="ghost"
           >
-            <GoHeading size={15} />
+            <LuHeading size={ICON_SIZE.TOOLBAR} />
           </Button>
         </SimpleTooltip>
         {showHeadingPalette && (
@@ -132,7 +132,7 @@ export function MarkdownToolbar({
           size="icon"
           variant="ghost"
         >
-          <GoBold size={15} />
+          <LuBold size={ICON_SIZE.TOOLBAR} />
         </Button>
       </SimpleTooltip>
       <SimpleTooltip content={t('editor.toolbar.italic')}>
@@ -142,7 +142,7 @@ export function MarkdownToolbar({
           size="icon"
           variant="ghost"
         >
-          <GoItalic size={15} />
+          <LuItalic size={ICON_SIZE.TOOLBAR} />
         </Button>
       </SimpleTooltip>
       <SimpleTooltip content={t('editor.toolbar.code')}>
@@ -152,7 +152,7 @@ export function MarkdownToolbar({
           size="icon"
           variant="ghost"
         >
-          <GoCodeSquare size={15} />
+          <LuSquareCode size={ICON_SIZE.TOOLBAR} />
         </Button>
       </SimpleTooltip>
       <SimpleTooltip content={t('editor.toolbar.strikethrough')}>
@@ -162,7 +162,7 @@ export function MarkdownToolbar({
           size="icon"
           variant="ghost"
         >
-          <GoStrikethrough size={15} />
+          <LuStrikethrough size={ICON_SIZE.TOOLBAR} />
         </Button>
       </SimpleTooltip>
       <SimpleTooltip content={t('editor.toolbar.link')}>
@@ -172,7 +172,7 @@ export function MarkdownToolbar({
           size="icon"
           variant="ghost"
         >
-          <GoLink size={15} />
+          <LuLink size={ICON_SIZE.TOOLBAR} />
         </Button>
       </SimpleTooltip>
 
@@ -186,7 +186,7 @@ export function MarkdownToolbar({
           size="icon"
           variant="ghost"
         >
-          <GoQuote size={15} />
+          <LuQuote size={ICON_SIZE.TOOLBAR} />
         </Button>
       </SimpleTooltip>
       <SimpleTooltip content={t('editor.toolbar.checkbox')}>
@@ -196,7 +196,7 @@ export function MarkdownToolbar({
           size="icon"
           variant="ghost"
         >
-          <GoTasklist size={15} />
+          <LuListChecks size={ICON_SIZE.TOOLBAR} />
         </Button>
       </SimpleTooltip>
       <SimpleTooltip content={t('editor.toolbar.bulletList')}>
@@ -206,7 +206,7 @@ export function MarkdownToolbar({
           size="icon"
           variant="ghost"
         >
-          <GoListUnordered size={15} />
+          <LuList size={ICON_SIZE.TOOLBAR} />
         </Button>
       </SimpleTooltip>
       <SimpleTooltip content={t('editor.toolbar.orderedList')}>
@@ -216,7 +216,7 @@ export function MarkdownToolbar({
           size="icon"
           variant="ghost"
         >
-          <GoListOrdered size={15} />
+          <LuListOrdered size={ICON_SIZE.TOOLBAR} />
         </Button>
       </SimpleTooltip>
 
@@ -229,7 +229,7 @@ export function MarkdownToolbar({
             size="icon"
             variant="ghost"
           >
-            <GoTable size={15} />
+            <LuTable size={ICON_SIZE.TOOLBAR} />
           </Button>
         </SimpleTooltip>
         {showTablePicker && <TablePicker onApplyTable={onApplyTable} />}
@@ -246,7 +246,7 @@ export function MarkdownToolbar({
             size="icon"
             variant="ghost"
           >
-            <FiDroplet size={15} />
+            <LuDroplet size={ICON_SIZE.TOOLBAR} />
           </Button>
         </SimpleTooltip>
         {showColorPalette && <ColorPalette onApplyColor={onApplyColor} />}
@@ -261,7 +261,7 @@ export function MarkdownToolbar({
             size="icon"
             variant="ghost"
           >
-            <GoInfo size={15} />
+            <LuInfo size={ICON_SIZE.TOOLBAR} />
           </Button>
         </SimpleTooltip>
         {showAlertPalette && <AlertPalette onApplyAlert={onApplyAlert} />}
@@ -279,7 +279,7 @@ export function MarkdownToolbar({
             size="icon"
             variant="ghost"
           >
-            <FiImage size={15} />
+            <LuImage size={ICON_SIZE.TOOLBAR} />
           </Button>
         </SimpleTooltip>
       )}
@@ -288,21 +288,33 @@ export function MarkdownToolbar({
       {hasExport && (
         <div className="ml-auto flex items-center gap-0.5">
           {sep}
-          <div className="relative self-center" ref={exportButtonRef}>
-            <Button
-              className="gap-1 px-2 text-xs font-medium"
-              disabled={isExporting}
-              onClick={() => setShowExportMenu(prev => !prev)}
-              size="sm"
-              variant="ghost"
-            >
-              <span>
-                {isExporting
-                  ? t('editor.toolbar.exporting')
-                  : t('editor.toolbar.export')}
-              </span>
-              <FiChevronDown size={12} />
-            </Button>
+          <div
+            className="relative self-center flex items-center"
+            ref={exportButtonRef}
+          >
+            <SimpleTooltip content={t('editor.toolbar.export')}>
+              <Button
+                aria-label={t('editor.toolbar.export')}
+                className="gap-0.5 px-1.5"
+                disabled={isExporting}
+                onClick={() => setShowExportMenu(prev => !prev)}
+                size="sm"
+                variant="ghost"
+              >
+                {isExporting ? (
+                  <LuLoaderCircle
+                    className="animate-spin"
+                    size={ICON_SIZE.TOOLBAR}
+                  />
+                ) : (
+                  <LuDownload size={ICON_SIZE.TOOLBAR} />
+                )}
+                <LuChevronDown
+                  className="text-muted-foreground"
+                  size={ICON_SIZE.INDICATOR}
+                />
+              </Button>
+            </SimpleTooltip>
             {showExportMenu && (
               <ExportMenu
                 onClose={() => setShowExportMenu(false)}
@@ -505,7 +517,10 @@ function ExportMenu({ onPdfExport, onHtmlExport, onClose }: ExportMenuProps) {
           onClick={handlePdf}
           type="button"
         >
-          <FiDownload className="shrink-0 text-muted-foreground" size={14} />
+          <LuDownload
+            className="shrink-0 text-muted-foreground"
+            size={ICON_SIZE.MENU}
+          />
           <span>{t('editor.toolbar.exportPdf')}</span>
         </button>
       )}
@@ -515,7 +530,10 @@ function ExportMenu({ onPdfExport, onHtmlExport, onClose }: ExportMenuProps) {
           onClick={handleHtml}
           type="button"
         >
-          <FiCode className="shrink-0 text-muted-foreground" size={14} />
+          <LuCode
+            className="shrink-0 text-muted-foreground"
+            size={ICON_SIZE.MENU}
+          />
           <span>{t('editor.toolbar.exportHtml')}</span>
         </button>
       )}

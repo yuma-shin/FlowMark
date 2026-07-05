@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { FiFolder, FiZap, FiFileText, FiHeart } from 'react-icons/fi'
+import { LuFolder, LuZap, LuFileText, LuHeart } from 'react-icons/lu'
 import { tauriApi as App } from '@/renderer/lib/tauriApi'
 import { Button } from './ui/button'
 
@@ -27,9 +27,9 @@ export function WelcomeScreen({ onSelect }: WelcomeScreenProps) {
   }
 
   const features = [
-    { icon: FiZap, label: t('welcome.features.speed') },
-    { icon: FiFileText, label: t('welcome.features.preview') },
-    { icon: FiHeart, label: t('welcome.features.ui') },
+    { icon: LuZap, label: t('welcome.features.speed') },
+    { icon: LuFileText, label: t('welcome.features.preview') },
+    { icon: LuHeart, label: t('welcome.features.ui') },
   ]
 
   // NotyraロゴSVG（大きめ）
@@ -123,7 +123,7 @@ export function WelcomeScreen({ onSelect }: WelcomeScreenProps) {
             disabled={isSelecting}
             onClick={handleSelectFolder}
           >
-            <FiFolder size={18} />
+            <LuFolder size={18} />
             {isSelecting
               ? t('welcome.selectButtonSelecting')
               : t('welcome.selectButtonText')}

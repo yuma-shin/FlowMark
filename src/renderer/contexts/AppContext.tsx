@@ -8,6 +8,8 @@ import {
 import { useTranslation } from 'react-i18next'
 import type { AppSettings } from '@/shared/types'
 import { applyColorTheme } from '../lib/themeManager'
+import { applyFontPerLanguage } from '../lib/fontManager'
+import { migrateLegacySettings } from '../lib/settingsMigration'
 
 interface AppContextType {
   settings: AppSettings
@@ -17,6 +19,7 @@ interface AppContextType {
 }
 
 const defaultSettings: AppSettings = {
+  rootFolders: [],
   editorLayoutMode: 'split',
   theme: 'system',
   colorTheme: 'gray',
@@ -38,7 +41,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       try {
         const stored = localStorage.getItem('appSettings')
         if (stored) {
-          const parsed = JSON.parse(stored)
+          const parsed = migrateLegacySettings(JSON.parse(stored))
           const mergedSettings = { ...defaultSettings, ...parsed }
           setSettings(mergedSettings)
           // 言語設定を反映
@@ -119,6 +122,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
     mediaQuery.addEventListener('change', handleChange)
     return () => mediaQuery.removeEventListener('change', handleChange)
   }, [settings.theme, settings.colorTheme, isLoading])
+
+  // フォントファミリーを適用
+  useEffect(() => {
+    if (isLoading) return
+    applyFontPerLanguage(settings.fontFamilyEn, settings.fontFamilyJa)
+  }, [settings.fontFamilyEn, settings.fontFamilyJa, isLoading])
 
   // 設定を更新
   const updateSettings = (updates: Partial<AppSettings>) => {

@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next'
-import { FiFilter } from 'react-icons/fi'
+import { LuFilter } from 'react-icons/lu'
 import { DropdownMenu } from './ui/dropdown-menu'
 import { Button } from './ui/button'
 
@@ -30,7 +30,7 @@ export function SortDropdown({ value, onChange }: SortDropdownProps) {
       onChange={onChange}
       trigger={
         <Button aria-label={selectedLabel} size="iconSm" variant="secondary">
-          <FiFilter size={14} />
+          <LuFilter size={14} />
         </Button>
       }
       value={value}

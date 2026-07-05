@@ -14,26 +14,45 @@
   }
 }
 
+/* Skeleton Screen用シマー（グラデーションスイープ）アニメーション */
+@keyframes skeleton-shimmer {
+  0% {
+    background-position: -150% 0;
+  }
+  100% {
+    background-position: 150% 0;
+  }
+}
+
 /* Font definitions for better readability */
 :root {
-  /* Sans-serif fonts for UI (Japanese + English) */
+  /* Monospace fonts for code */
   --font-mono:
     "JetBrains Mono", "Fira Code", "Cascadia Code", "Source Code Pro", Consolas,
     Menlo, Monaco, "Courier New", monospace;
-  /* Sans-serif fonts for UI (Japanese + English) */
-  font-family:
-    -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans JP",
-    "Hiragino Kaku Gothic ProN", "Yu Gothic UI", "Meiryo", sans-serif;
+  /* Sans-serif fonts for UI — overridden at runtime via fontManager */
+  --font-sans:
+    "Geist", "Kosugi Maru", -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+  font-family: var(--font-sans);
 }
 
 /* Apply monospace font to code elements */
 code,
-pre,
-.cm-editor {
+pre {
   font-family: var(--font-mono);
   font-feature-settings:
     "liga" 1,
     "calt" 1; /* Enable ligatures */
+}
+
+/* CodeMirror editor uses --font-sans for markdown body text.
+ * Code blocks and inline code are handled separately below. */
+.cm-editor {
+  font-family: var(--font-sans);
+  font-feature-settings:
+    "liga" 1,
+    "calt" 1;
 }
 
 /* Custom gradient classes */
@@ -322,10 +341,18 @@ pre,
   }
 }
 
-/* Markdown Preview Styles */
+/* Markdown Preview Styles
+ * font-family は github-markdown-light/dark.css の `.markdown-body` と同一specificity (0,1,0) のため、
+ * data-color-mode 属性スコープで specificity (0,2,0) に上げて確実に上書きする
+ * (見出しのspecificity対策と同じ手法)。
+ */
 .markdown-body {
   color: inherit;
   background-color: transparent;
+}
+
+.markdown-body[data-color-mode] {
+  font-family: var(--font-sans);
 }
 
 .markdown-body[data-color-mode="dark"] {
@@ -601,6 +628,7 @@ pre,
   padding-bottom: 0.6em;
   margin-top: 1.75em;
   margin-bottom: 1.2em;
+  font-family: inherit;
   font-weight: 700;
   line-height: 1.4;
   color: var(--theme-heading-color);
@@ -617,8 +645,8 @@ pre,
   content: "";
   background: linear-gradient(
     to right,
-    var(--theme-accent) 0%,
-    var(--theme-accent) 12%,
+    var(--theme-gradient-from) 0%,
+    var(--theme-gradient-from) 12%,
     var(--theme-gradient-to) 12%,
     var(--theme-gradient-to) 24%,
     var(--border) 24%,
@@ -634,6 +662,7 @@ pre,
   padding-bottom: 0;
   margin-top: 1.5em;
   margin-bottom: 0.8em;
+  font-family: inherit;
   font-weight: 600;
   line-height: 1.4;
   color: var(--theme-heading-color);
@@ -649,7 +678,7 @@ pre,
   content: "";
   background: linear-gradient(
     to bottom,
-    var(--theme-accent) 50%,
+    var(--theme-gradient-from) 50%,
     var(--theme-gradient-to) 50%
   );
   border-radius: 9999px;
@@ -661,6 +690,7 @@ pre,
   align-items: center;
   margin-top: 1.25em;
   margin-bottom: 0.6em;
+  font-family: inherit;
   font-weight: 600;
   color: var(--theme-heading-color);
 }
@@ -679,6 +709,7 @@ pre,
 .markdown-body[data-color-mode] h4 {
   margin-top: 1.1em;
   margin-bottom: 0.5em;
+  font-family: inherit;
   font-weight: 600;
   color: var(--theme-heading-color);
 }
@@ -686,6 +717,7 @@ pre,
 .markdown-body[data-color-mode] h5 {
   margin-top: 1em;
   margin-bottom: 0.4em;
+  font-family: inherit;
   font-weight: 600;
   color: var(--theme-heading-color);
 }
@@ -693,6 +725,7 @@ pre,
 .markdown-body[data-color-mode] h6 {
   margin-top: 1em;
   margin-bottom: 0.4em;
+  font-family: inherit;
   font-weight: 600;
   color: var(--muted-foreground);
   text-transform: uppercase;
@@ -1139,7 +1172,9 @@ pre,
 .drag-region button,
 .drag-region input,
 .drag-region select,
-.drag-region textarea {
+.drag-region textarea,
+.drag-region .no-drag,
+.drag-region .no-drag * {
   -webkit-app-region: no-drag;
   app-region: no-drag;
 }
@@ -1219,4 +1254,27 @@ pre,
   outline: 2px dashed var(--theme-accent);
   outline-offset: -2px;
   background-color: var(--theme-accent-subtle);
+}
+
+/* Note list transition animations (Requirements 1.1, 2.1, 5.4) */
+@keyframes note-enter {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes note-exit {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(8px);
+  }
 }

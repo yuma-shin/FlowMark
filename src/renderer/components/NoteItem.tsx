@@ -1,7 +1,9 @@
 import { useTranslation } from 'react-i18next'
-import { FiTrash2 } from 'react-icons/fi'
+import { LuTrash2 } from 'react-icons/lu'
 import { SimpleTooltip } from './ui/tooltip'
 import type { MarkdownNoteMeta } from '@/shared/types'
+import type { AnimationPhase } from '@/renderer/lib/noteListAnimation'
+import { ANIMATION_DURATION_MS } from '@/renderer/lib/noteListAnimation'
 
 interface NoteItemProps {
   note: MarkdownNoteMeta
@@ -9,6 +11,7 @@ interface NoteItemProps {
   onSelect: () => void
   onDoubleClick: () => void
   onDelete?: () => void
+  animationPhase?: AnimationPhase
 }
 
 export function NoteItem({
@@ -17,6 +20,7 @@ export function NoteItem({
   onSelect,
   onDoubleClick,
   onDelete,
+  animationPhase,
 }: NoteItemProps) {
   const { t } = useTranslation()
   const formatDate = (dateStr?: string) => {
@@ -33,10 +37,25 @@ export function NoteItem({
     }
   }
 
+  const animationStyle = (() => {
+    if (animationPhase === 'entering') {
+      return {
+        animation: `note-enter ${ANIMATION_DURATION_MS}ms ease forwards`,
+      }
+    }
+    if (animationPhase === 'exiting') {
+      return { animation: `note-exit ${ANIMATION_DURATION_MS}ms ease forwards` }
+    }
+    return undefined
+  })()
+
   return (
     <div
+      aria-hidden={animationPhase === 'exiting' ? 'true' : undefined}
       className="sidebar-item group relative mx-1 my-0.5 overflow-hidden"
       data-active={isSelected}
+      data-animation-phase={animationPhase ?? 'idle'}
+      style={animationStyle}
     >
       <button
         className="w-full cursor-pointer text-left px-2.5 py-2"
@@ -88,10 +107,11 @@ export function NoteItem({
             <button
               aria-label={t('noteItem.delete')}
               className="absolute inset-0 flex items-center justify-center text-destructive transition-colors duration-150 hover:bg-destructive hover:text-white"
+              disabled={animationPhase === 'exiting'}
               onClick={onDelete}
               type="button"
             >
-              <FiTrash2 size={16} />
+              <LuTrash2 size={16} />
             </button>
           </SimpleTooltip>
         </div>

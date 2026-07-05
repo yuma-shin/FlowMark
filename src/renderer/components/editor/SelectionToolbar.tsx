@@ -1,21 +1,22 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { FiDroplet } from 'react-icons/fi'
 import {
-  GoBold,
-  GoItalic,
-  GoCodeSquare,
-  GoLink,
-  GoListUnordered,
-  GoListOrdered,
-  GoStrikethrough,
-  GoQuote,
-  GoTasklist,
-  GoInfo,
-} from 'react-icons/go'
+  LuDroplet,
+  LuBold,
+  LuItalic,
+  LuSquareCode,
+  LuLink,
+  LuList,
+  LuListOrdered,
+  LuStrikethrough,
+  LuQuote,
+  LuListChecks,
+  LuInfo,
+} from 'react-icons/lu'
 import { SimpleTooltip } from '../ui/tooltip'
 import { Button } from '../ui/button'
 import { ALERT_OPTIONS } from '@/renderer/lib/alertOptions'
+import { ICON_SIZE } from '@/renderer/lib/iconConstants'
 
 interface SelectionToolbarProps {
   position: { top: number; left: number }
@@ -85,7 +86,7 @@ export function SelectionToolbar({
           size="icon"
           variant="ghost"
         >
-          <GoBold size={16} />
+          <LuBold size={ICON_SIZE.TOOLBAR} />
         </Button>
       </SimpleTooltip>
       <SimpleTooltip content={t('editor.toolbar.italic')}>
@@ -95,7 +96,7 @@ export function SelectionToolbar({
           size="icon"
           variant="ghost"
         >
-          <GoItalic size={16} />
+          <LuItalic size={ICON_SIZE.TOOLBAR} />
         </Button>
       </SimpleTooltip>
       <SimpleTooltip content={t('editor.toolbar.code')}>
@@ -105,7 +106,7 @@ export function SelectionToolbar({
           size="icon"
           variant="ghost"
         >
-          <GoCodeSquare size={16} />
+          <LuSquareCode size={ICON_SIZE.TOOLBAR} />
         </Button>
       </SimpleTooltip>
       <SimpleTooltip content={t('editor.toolbar.strikethrough')}>
@@ -115,7 +116,7 @@ export function SelectionToolbar({
           size="icon"
           variant="ghost"
         >
-          <GoStrikethrough size={16} />
+          <LuStrikethrough size={ICON_SIZE.TOOLBAR} />
         </Button>
       </SimpleTooltip>
       <SimpleTooltip content={t('editor.toolbar.link')}>
@@ -125,7 +126,7 @@ export function SelectionToolbar({
           size="icon"
           variant="ghost"
         >
-          <GoLink size={16} />
+          <LuLink size={ICON_SIZE.TOOLBAR} />
         </Button>
       </SimpleTooltip>
       {sep}
@@ -136,7 +137,7 @@ export function SelectionToolbar({
           size="icon"
           variant="ghost"
         >
-          <GoQuote size={16} />
+          <LuQuote size={ICON_SIZE.TOOLBAR} />
         </Button>
       </SimpleTooltip>
       <SimpleTooltip content={t('editor.toolbar.checkbox')}>
@@ -146,7 +147,7 @@ export function SelectionToolbar({
           size="icon"
           variant="ghost"
         >
-          <GoTasklist size={16} />
+          <LuListChecks size={ICON_SIZE.TOOLBAR} />
         </Button>
       </SimpleTooltip>
       <SimpleTooltip content={t('editor.toolbar.bulletList')}>
@@ -156,7 +157,7 @@ export function SelectionToolbar({
           size="icon"
           variant="ghost"
         >
-          <GoListUnordered size={16} />
+          <LuList size={ICON_SIZE.TOOLBAR} />
         </Button>
       </SimpleTooltip>
       <SimpleTooltip content={t('editor.toolbar.orderedList')}>
@@ -166,7 +167,7 @@ export function SelectionToolbar({
           size="icon"
           variant="ghost"
         >
-          <GoListOrdered size={16} />
+          <LuListOrdered size={ICON_SIZE.TOOLBAR} />
         </Button>
       </SimpleTooltip>
       {sep}
@@ -178,7 +179,7 @@ export function SelectionToolbar({
             size="icon"
             variant="ghost"
           >
-            <FiDroplet size={15} />
+            <LuDroplet size={ICON_SIZE.TOOLBAR} />
           </Button>
         </SimpleTooltip>
         {showColorPalette && <ColorPalette onApplyColor={handleColorApply} />}
@@ -191,7 +192,7 @@ export function SelectionToolbar({
             size="icon"
             variant="ghost"
           >
-            <GoInfo size={15} />
+            <LuInfo size={ICON_SIZE.TOOLBAR} />
           </Button>
         </SimpleTooltip>
         {showAlertPalette && <AlertPalette onApplyAlert={handleAlertApply} />}

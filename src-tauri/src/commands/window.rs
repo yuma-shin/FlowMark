@@ -3,8 +3,13 @@ use tauri::TitleBarStyle;
 use tauri::{command, AppHandle, Manager, WebviewUrl, WebviewWindowBuilder};
 
 #[command]
-pub async fn open_note_window(app: AppHandle, note_path: String) -> Result<bool, String> {
+pub async fn open_note_window(
+    app: AppHandle,
+    note_path: String,
+    root_dir: String,
+) -> Result<bool, String> {
     let encoded = urlencoding::encode(&note_path).to_string();
+    let encoded_root = urlencoding::encode(&root_dir).to_string();
     let label = format!(
         "note_{}",
         note_path
@@ -23,13 +28,18 @@ pub async fn open_note_window(app: AppHandle, note_path: String) -> Result<bool,
     let url = if cfg!(debug_assertions) {
         // 開発モード: Vite dev server の URL を使用
         WebviewUrl::External(
-            format!("http://localhost:1420/#/editor?note={}", encoded)
-                .parse()
-                .map_err(|e: url::ParseError| e.to_string())?,
+            format!(
+                "http://localhost:1420/#/editor?note={}&root={}",
+                encoded, encoded_root
+            )
+            .parse()
+            .map_err(|e: url::ParseError| e.to_string())?,
         )
     } else {
         // 本番ビルド: タウリプロトコルを使用
-        WebviewUrl::App(format!("index.html#/editor?note={}", encoded).into())
+        WebviewUrl::App(
+            format!("index.html#/editor?note={}&root={}", encoded, encoded_root).into(),
+        )
     };
 
     #[allow(unused_mut)]

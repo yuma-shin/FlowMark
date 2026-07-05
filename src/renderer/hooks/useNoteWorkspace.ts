@@ -1,10 +1,23 @@
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef, useCallback } from 'react'
 import { useApp } from '../contexts/AppContext'
 import { tauriApi as App } from '@/renderer/lib/tauriApi'
 import { stripFrontMatter } from '@/renderer/utils/frontMatter'
 import type { MarkdownNoteMeta, FolderNode, AppSettings } from '@/shared/types'
+import { ANIMATION_DURATION_MS } from '@/renderer/lib/noteListAnimation'
+import type { NoteListMutation } from '@/renderer/lib/noteListAnimation'
 
 const EXTERNAL_CHANGE_COOLDOWN_MS = 5000
+
+export interface RootMeta {
+  lastSelectedFolder?: string
+  lastOpenedNotePath?: string
+}
+
+export interface UseNoteWorkspaceParams {
+  rootDir: string | undefined
+  rootMeta: RootMeta
+  onMetaChange: (meta: Partial<RootMeta>) => void
+}
 
 export interface UseNoteWorkspaceResult {
   // ロード・初期化状態
@@ -26,8 +39,6 @@ export interface UseNoteWorkspaceResult {
   isNoteTransitioning: boolean
   showAllNotes: boolean
   // 操作
-  onRootFolderSelect: (path: string) => void
-  onChangeRootFolder: () => void
   onShowAllNotes: () => void
   onSelectFolder: (relativePath: string) => void
   onSelectTag: (tag: string | null) => void
@@ -43,10 +54,17 @@ export interface UseNoteWorkspaceResult {
   onToggleNoteList: () => void
   onSaveErrorDismiss: () => void
   onLayoutModeChange: (mode: AppSettings['editorLayoutMode']) => void
+  flushPendingSave: () => Promise<void>
+  noteListMutation: NoteListMutation | null
+  onNoteRemovalComplete: (filePath: string) => void
 }
 
-export function useNoteWorkspace(): UseNoteWorkspaceResult {
-  const { settings, updateSettings, isLoading: settingsLoading } = useApp()
+export function useNoteWorkspace({
+  rootDir,
+  rootMeta,
+  onMetaChange,
+}: UseNoteWorkspaceParams): UseNoteWorkspaceResult {
+  const { settings, updateSettings } = useApp()
   const [showRootDialog, setShowRootDialog] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [folderTree, setFolderTree] = useState<FolderNode | null>(null)
@@ -72,17 +90,25 @@ export function useNoteWorkspace(): UseNoteWorkspaceResult {
     'forward' | 'backward'
   >('forward')
   const [showAllNotes, setShowAllNotes] = useState(false)
+  const [noteListMutation, setNoteListMutation] =
+    useState<NoteListMutation | null>(null)
   const lastSaveTimeRef = useRef<number>(0)
   const lastLocalEditTimeRef = useRef<number>(0)
   const lastLocalWriteTimeRef = useRef<number>(0)
   const reloadTimeoutRef = useRef<number | undefined>(undefined)
   const saveTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined)
-  const rootDirRef = useRef<string | undefined>(settings.rootDir)
+  const rootDirRef = useRef<string | undefined>(rootDir)
+  const selectedNoteRef = useRef<MarkdownNoteMeta | null>(null)
 
   // rootDir の最新値を ref に反映（onCloseRequested クロージャーから参照）
   useEffect(() => {
-    rootDirRef.current = settings.rootDir
-  }, [settings.rootDir])
+    rootDirRef.current = rootDir
+  }, [rootDir])
+
+  // selectedNote の最新値を ref に反映（onNoteRemovalComplete クロージャーから参照）
+  useEffect(() => {
+    selectedNoteRef.current = selectedNote
+  }, [selectedNote])
 
   // ウィンドウ終了時に未使用画像をクリーンアップする
   useEffect(() => {
@@ -119,29 +145,39 @@ export function useNoteWorkspace(): UseNoteWorkspaceResult {
   // 初期化
   useEffect(() => {
     const initialize = async () => {
-      if (settingsLoading) {
-        return
-      }
+      // ルート変更時は即座に旧ルートの表示状態をリセットし、
+      // 新ルートのスキャンが完了するまで読み込み中であることを示す
+      setSelectedNote(null)
+      setNoteContent('')
+      setAllNotes([])
+      setFilteredNotes([])
+      setFolderFilteredNotes([])
+      setFolderTree(null)
+      setSelectedFolder('')
+      setShowAllNotes(false)
+      setIsLoading(true)
 
-      if (!settings.rootDir) {
+      if (!rootDir) {
         setShowRootDialog(true)
         setIsLoading(false)
         return
       }
 
-      const exists = await App.markdown.checkRootExists(settings.rootDir)
+      const exists = await App.markdown.checkRootExists(rootDir)
       if (!exists) {
         setShowRootDialog(true)
         setIsLoading(false)
         return
       }
 
+      setShowRootDialog(false)
+
       // サイドバー・ノートリストの表示状態を復元
       setShowSidebar(settings.showSidebar ?? true)
       setShowNoteList(settings.showNoteList ?? true)
 
       // 前回選択していたフォルダを復元
-      const lastFolder = settings.lastSelectedFolder ?? ''
+      const lastFolder = rootMeta.lastSelectedFolder ?? ''
       setSelectedFolder(lastFolder)
 
       await loadNotes(lastFolder)
@@ -150,16 +186,15 @@ export function useNoteWorkspace(): UseNoteWorkspaceResult {
 
     initialize()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [settings.rootDir, settingsLoading])
+  }, [rootDir])
 
   // ノートを読み込む
   const loadNotes = async (folderPath?: string) => {
-    if (!settings.rootDir || !App) return
+    if (!rootDir || !App) return
 
     try {
-      const { notes, tree } = await App.markdown.scanNotesAndBuildFolderTree(
-        settings.rootDir
-      )
+      const { notes, tree } =
+        await App.markdown.scanNotesAndBuildFolderTree(rootDir)
       setAllNotes(notes)
       setFolderTree(tree)
       const targetFolder =
@@ -208,9 +243,9 @@ export function useNoteWorkspace(): UseNoteWorkspaceResult {
       }
 
       // 前回開いていたノートを開く（現在のフォルダ内にある場合のみ）
-      if (settings.lastOpenedNotePath) {
+      if (rootMeta.lastOpenedNotePath) {
         const lastNote = notes.find(
-          n => n.filePath === settings.lastOpenedNotePath
+          n => n.filePath === rootMeta.lastOpenedNotePath
         )
         if (lastNote) {
           // ノートが現在選択されているフォルダ内にあるかチェック
@@ -239,42 +274,6 @@ export function useNoteWorkspace(): UseNoteWorkspaceResult {
     }
   }
 
-  // ルートフォルダ選択
-  const onRootFolderSelect = (path: string) => {
-    // 即座にエディタと各リストをリセット（クリーンな切り替え）
-    setSelectedNote(null)
-    setNoteContent('')
-    setAllNotes([])
-    setFilteredNotes([])
-    setFolderFilteredNotes([])
-    setFolderTree(null)
-    setSelectedFolder('')
-    setShowAllNotes(false)
-    setShowRootDialog(false)
-    setIsLoading(true)
-
-    if (path === settings.rootDir) {
-      // 同じフォルダが選択された場合、settings.rootDir は変わらないため
-      // useEffect が発火しない。直接ロードする（この時点でクロージャー内の
-      // settings.rootDir は既に正しい値なので stale closure の問題はない）。
-      loadNotes('').finally(() => setIsLoading(false))
-      return
-    }
-
-    // settings.rootDir の変更が useEffect [settings.rootDir, settingsLoading] を
-    // トリガーし、新しい rootDir で loadNotes() が正しく呼ばれる。
-    updateSettings({
-      rootDir: path,
-      lastSelectedFolder: '',
-      lastOpenedNotePath: undefined,
-    })
-  }
-
-  // ルートフォルダ再選択
-  const onChangeRootFolder = () => {
-    setShowRootDialog(true)
-  }
-
   // すべてのノートを表示
   const onShowAllNotes = () => {
     setShowAllNotes(true)
@@ -287,7 +286,7 @@ export function useNoteWorkspace(): UseNoteWorkspaceResult {
   // フォルダ選択
   const onSelectFolder = (relativePath: string) => {
     setSelectedFolder(relativePath)
-    updateSettings({ lastSelectedFolder: relativePath })
+    onMetaChange({ lastSelectedFolder: relativePath })
     setSelectedTag(null) // タグフィルターをクリア
     setShowAllNotes(false)
 
@@ -441,7 +440,7 @@ export function useNoteWorkspace(): UseNoteWorkspaceResult {
     }
 
     setSelectedNote(note)
-    updateSettings({ lastOpenedNotePath: note.filePath })
+    onMetaChange({ lastOpenedNotePath: note.filePath })
 
     try {
       const content = await App.markdown.getNoteContent(note.filePath)
@@ -523,73 +522,80 @@ export function useNoteWorkspace(): UseNoteWorkspaceResult {
   const onContentChange = (content: string) => {
     lastLocalEditTimeRef.current = Date.now()
     setNoteContent(content)
-    debouncedSave(content)
+    scheduleSave(content)
   }
 
-  // 自動保存（デバウンス付き）
-  const debouncedSave = (() => {
-    return (content: string) => {
-      if (saveTimeoutRef.current) {
-        clearTimeout(saveTimeoutRef.current)
-      }
-      saveTimeoutRef.current = setTimeout(async () => {
-        if (!selectedNote) return
-        setIsSaving(true)
-        try {
-          // コンテンツにfront matterが含まれているかチェック
-          // front matterがない場合は、メタデータを保持したまま保存
-          if (!content.startsWith('---\n')) {
-            // 現在のノートからfront matterを取得
-            const currentContent = await App.markdown.getNoteContent(
-              selectedNote.filePath
-            )
-            if (currentContent?.rawContent) {
-              // 生のファイル内容からfront matterを抽出
-              const rawContent = currentContent.rawContent
-              if (rawContent.startsWith('---\n')) {
-                const endIndex = rawContent.indexOf('\n---\n', 4)
-                if (endIndex !== -1) {
-                  // front matterセクション全体（最後の改行を含む）
-                  const frontMatterSection = rawContent.substring(
-                    0,
-                    endIndex + 5
-                  )
-                  // contentの先頭の改行を削除してから結合
-                  const trimmedContent = content.replace(/^\n+/, '')
-                  // front matterと新しいコンテンツを結合（front matterは既に改行で終わっているので追加不要）
-                  const contentToSave = frontMatterSection + trimmedContent
-                  await App.markdown.saveNote(
-                    selectedNote.filePath,
-                    contentToSave
-                  )
-                  lastSaveTimeRef.current = Date.now()
-                  lastLocalWriteTimeRef.current = Date.now()
-                  setSaveError(null)
-                  setIsSaving(false)
-                  saveTimeoutRef.current = undefined
+  // 保存処理本体（スケジューリングと分離し、即時実行を可能にする）
+  const performSave = async (content: string) => {
+    if (!selectedNote) return
+    setIsSaving(true)
+    try {
+      // コンテンツにfront matterが含まれているかチェック
+      // front matterがない場合は、メタデータを保持したまま保存
+      if (!content.startsWith('---\n')) {
+        // 現在のノートからfront matterを取得
+        const currentContent = await App.markdown.getNoteContent(
+          selectedNote.filePath
+        )
+        if (currentContent?.rawContent) {
+          // 生のファイル内容からfront matterを抽出
+          const rawContent = currentContent.rawContent
+          if (rawContent.startsWith('---\n')) {
+            const endIndex = rawContent.indexOf('\n---\n', 4)
+            if (endIndex !== -1) {
+              // front matterセクション全体（最後の改行を含む）
+              const frontMatterSection = rawContent.substring(0, endIndex + 5)
+              // contentの先頭の改行を削除してから結合
+              const trimmedContent = content.replace(/^\n+/, '')
+              // front matterと新しいコンテンツを結合（front matterは既に改行で終わっているので追加不要）
+              const contentToSave = frontMatterSection + trimmedContent
+              await App.markdown.saveNote(selectedNote.filePath, contentToSave)
+              lastSaveTimeRef.current = Date.now()
+              lastLocalWriteTimeRef.current = Date.now()
+              setSaveError(null)
+              setIsSaving(false)
+              saveTimeoutRef.current = undefined
 
-                  return
-                }
-              }
+              return
             }
           }
-
-          // front matterが既に含まれている場合はそのまま保存
-          await App.markdown.saveNote(selectedNote.filePath, content)
-          lastSaveTimeRef.current = Date.now()
-          lastLocalWriteTimeRef.current = Date.now()
-          setSaveError(null)
-        } catch (error) {
-          const msg = error instanceof Error ? error.message : String(error)
-          console.error('Failed to save note:', msg)
-          setSaveError(msg)
-        } finally {
-          setIsSaving(false)
-          saveTimeoutRef.current = undefined
         }
-      }, 1000)
+      }
+
+      // front matterが既に含まれている場合はそのまま保存
+      await App.markdown.saveNote(selectedNote.filePath, content)
+      lastSaveTimeRef.current = Date.now()
+      lastLocalWriteTimeRef.current = Date.now()
+      setSaveError(null)
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : String(error)
+      console.error('Failed to save note:', msg)
+      setSaveError(msg)
+    } finally {
+      setIsSaving(false)
+      saveTimeoutRef.current = undefined
     }
-  })()
+  }
+
+  // 自動保存のスケジューリング（デバウンス）
+  const scheduleSave = (content: string) => {
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current)
+    }
+    saveTimeoutRef.current = setTimeout(() => {
+      performSave(content)
+    }, 1000)
+  }
+
+  // 保留中の自動保存があれば即座に確定させる
+  const flushPendingSave = async (): Promise<void> => {
+    if (!saveTimeoutRef.current) {
+      return
+    }
+    clearTimeout(saveTimeoutRef.current)
+    saveTimeoutRef.current = undefined
+    await performSave(noteContent)
+  }
 
   // レイアウトモード変更
   const onLayoutModeChange = (mode: AppSettings['editorLayoutMode']) => {
@@ -611,23 +617,46 @@ export function useNoteWorkspace(): UseNoteWorkspaceResult {
 
   // ノート作成
   const onCreateNote = async (title: string) => {
-    if (!settings.rootDir) return
+    if (!rootDir) return
 
     try {
       const filePath = await App.markdown.createNote(
-        settings.rootDir,
+        rootDir,
         selectedFolder,
         title
       )
       if (filePath) {
-        // ノートリストを再読み込み
-        const { notes, tree } = await App.markdown.scanNotesAndBuildFolderTree(
-          settings.rootDir
-        )
+        // 1. 楽観的メタデータを構築（スキャン完了を待たずに即座にUI更新）
+        const now = new Date().toISOString()
+        const optimisticNote: MarkdownNoteMeta = {
+          id: filePath,
+          filePath,
+          relativePath: selectedFolder
+            ? `${selectedFolder}/${title}.md`
+            : `${title}.md`,
+          title,
+          excerpt: '',
+          tags: [],
+          createdAt: now,
+          updatedAt: now,
+        }
+
+        // 2. filteredNotes/allNotesに楽観的に追加し、mutationを即座に発行
+        setFilteredNotes(prev => [optimisticNote, ...prev])
+        setAllNotes(prev => [optimisticNote, ...prev])
+        setFolderFilteredNotes(prev => [optimisticNote, ...prev])
+        setNoteListMutation({ type: 'create', filePath, at: Date.now() })
+
+        // 3. 新しいノートを即座に選択（即座のフィードバック）
+        onSelectNote(optimisticNote)
+
+        // 4. バックグラウンドでスキャンし、正確なメタデータで差し替え
+        const { notes, tree } =
+          await App.markdown.scanNotesAndBuildFolderTree(rootDir)
         setAllNotes(notes)
         setFolderTree(tree)
 
-        // フィルタリングされたノートリストを更新
+        // フォルダフィルタリングを再適用
         const filtered = notes.filter(note => {
           if (selectedFolder === '') {
             const dir =
@@ -653,17 +682,17 @@ export function useNoteWorkspace(): UseNoteWorkspaceResult {
                   )
                 )
               : ''
-          // パス区切り文字を統一して比較
           const normalizedDir = dir.replace(/\\/g, '/')
           const normalizedSelectedFolder = selectedFolder.replace(/\\/g, '/')
           return normalizedDir === normalizedSelectedFolder
         })
         setFilteredNotes(filtered)
+        setFolderFilteredNotes(filtered)
 
-        // 新しく作成したノートを開く
-        const newNote = notes.find(n => n.filePath === filePath)
-        if (newNote) {
-          onSelectNote(newNote)
+        // 5. 正確なノートデータで選択を更新
+        const actualNote = notes.find(n => n.filePath === filePath)
+        if (actualNote) {
+          setSelectedNote(actualNote)
         }
       }
     } catch (error) {
@@ -673,13 +702,13 @@ export function useNoteWorkspace(): UseNoteWorkspaceResult {
 
   // フォルダ作成
   const onCreateFolder = async (folderName: string) => {
-    if (!settings.rootDir) return
+    if (!rootDir) return
 
     try {
       const newPath = selectedFolder
         ? `${selectedFolder}/${folderName}`
         : folderName
-      const success = await App.markdown.createFolder(settings.rootDir, newPath)
+      const success = await App.markdown.createFolder(rootDir, newPath)
       if (success) {
         await loadNotes()
       }
@@ -794,20 +823,19 @@ export function useNoteWorkspace(): UseNoteWorkspaceResult {
 
   // ノート移動
   const onNoteMove = async (targetFolder: string) => {
-    if (!selectedNote || !settings.rootDir) return
+    if (!selectedNote || !rootDir) return
 
     try {
       const newFilePath = await App.markdown.moveNote(
-        settings.rootDir,
+        rootDir,
         selectedNote.filePath,
         targetFolder
       )
 
       if (newFilePath) {
         // ノートリストを再読み込み
-        const { notes, tree } = await App.markdown.scanNotesAndBuildFolderTree(
-          settings.rootDir
-        )
+        const { notes, tree } =
+          await App.markdown.scanNotesAndBuildFolderTree(rootDir)
         setAllNotes(notes)
         setFolderTree(tree)
 
@@ -865,27 +893,37 @@ export function useNoteWorkspace(): UseNoteWorkspaceResult {
 
   // ノート削除（実際の削除処理。確認ダイアログの表示制御は呼び出し側が担当する）
   const onDeleteNote = async (note: MarkdownNoteMeta) => {
-    if (!settings.rootDir) return
+    if (!rootDir) return
 
     try {
       const success = await App.markdown.deleteNote(note.filePath)
       if (success) {
-        // ノートに紐づく画像を削除
+        // ノートに紐づく画像を削除（fire-and-forget）
         const noteBaseName =
           note.filePath.replace(/\.md$/i, '').split(/[/\\]/).pop() || ''
         if (noteBaseName) {
           App.image
-            .deleteNoteImages(settings.rootDir, noteBaseName)
+            .deleteNoteImages(rootDir, noteBaseName)
             .catch((err: unknown) =>
               console.error('Failed to delete note images:', err)
             )
         }
-        // 削除されたノートが選択中の場合はクリア
-        if (selectedNote?.filePath === note.filePath) {
-          setSelectedNote(null)
-          setNoteContent('')
-        }
-        await loadNotes()
+
+        // 1. Mutation発行（退去アニメーション開始）
+        setNoteListMutation({
+          type: 'delete',
+          filePath: note.filePath,
+          at: Date.now(),
+        })
+
+        // 2. filteredNotesから対象を楽観的に除外
+        setFilteredNotes(prev => prev.filter(n => n.filePath !== note.filePath))
+        setAllNotes(prev => prev.filter(n => n.filePath !== note.filePath))
+
+        // 3. アニメーション完了後にフォルダツリー等を再スキャン
+        setTimeout(() => {
+          loadNotes()
+        }, ANIMATION_DURATION_MS + 50)
       }
     } catch (error) {
       console.error('Failed to delete:', error)
@@ -894,13 +932,10 @@ export function useNoteWorkspace(): UseNoteWorkspaceResult {
 
   // フォルダ削除（実際の削除処理。確認ダイアログの表示制御は呼び出し側が担当する）
   const onDeleteFolder = async (folderPath: string) => {
-    if (!settings.rootDir) return
+    if (!rootDir) return
 
     try {
-      const success = await App.markdown.deleteFolder(
-        settings.rootDir,
-        folderPath
-      )
+      const success = await App.markdown.deleteFolder(rootDir, folderPath)
       if (success) {
         // 削除されたフォルダが選択中の場合はルートに戻す
         if (
@@ -926,6 +961,14 @@ export function useNoteWorkspace(): UseNoteWorkspaceResult {
     }
   }
 
+  // ノート退去アニメーション完了時のコールバック
+  const onNoteRemovalComplete = useCallback((filePath: string) => {
+    if (selectedNoteRef.current?.filePath === filePath) {
+      setSelectedNote(null)
+      setNoteContent('')
+    }
+  }, [])
+
   const onSaveErrorDismiss = () => {
     setSaveError(null)
   }
@@ -947,8 +990,6 @@ export function useNoteWorkspace(): UseNoteWorkspaceResult {
     showNoteList,
     isNoteTransitioning,
     showAllNotes,
-    onRootFolderSelect,
-    onChangeRootFolder,
     onShowAllNotes,
     onSelectFolder,
     onSelectTag,
@@ -964,5 +1005,8 @@ export function useNoteWorkspace(): UseNoteWorkspaceResult {
     onToggleNoteList,
     onSaveErrorDismiss,
     onLayoutModeChange,
+    flushPendingSave,
+    noteListMutation,
+    onNoteRemovalComplete,
   }
 }

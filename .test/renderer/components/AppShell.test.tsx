@@ -2,6 +2,7 @@ import { describe, it, expect, vi, afterEach } from 'vitest'
 import { render, screen, fireEvent, cleanup } from '@testing-library/react'
 import { AppShell } from '@/renderer/components/AppShell'
 import type { UseNoteWorkspaceResult } from '@/renderer/hooks/useNoteWorkspace'
+import type { RootFolderTabBarProps } from '@/renderer/components/RootFolderTabBar'
 import type { AppSettings, FolderNode, MarkdownNoteMeta } from '@/shared/types'
 
 vi.mock('@/renderer/components/CustomTitleBar', () => ({
@@ -10,7 +11,7 @@ vi.mock('@/renderer/components/CustomTitleBar', () => ({
     showNoteList?: boolean
     onToggleSidebar?: () => void
     onToggleNoteList?: () => void
-    onChangeRootFolder?: () => void
+    tabBar?: RootFolderTabBarProps
   }) => (
     <div>
       <span data-testid="titlebar-show-sidebar">
@@ -22,8 +23,8 @@ vi.mock('@/renderer/components/CustomTitleBar', () => ({
       <button onClick={props.onToggleNoteList} type="button">
         toggle-notelist
       </button>
-      <button onClick={props.onChangeRootFolder} type="button">
-        change-root
+      <button onClick={props.tabBar?.onAdd} type="button">
+        add-root
       </button>
     </div>
   ),
@@ -60,11 +61,21 @@ const FOLDER_TREE: FolderNode = {
 }
 
 const SETTINGS: AppSettings = {
+  rootFolders: [{ path: '/notes' }],
+  activeRootFolder: '/notes',
   editorLayoutMode: 'split',
   theme: 'system',
   colorTheme: 'gray',
   language: 'en',
-  rootDir: '/notes',
+}
+
+const TAB_BAR: RootFolderTabBarProps = {
+  tabs: [{ path: '/notes', name: 'notes', status: 'ok' }],
+  activePath: '/notes',
+  onSelect: vi.fn(),
+  onClose: vi.fn(),
+  onAdd: vi.fn(),
+  onReorder: vi.fn(),
 }
 
 function createWorkspace(
@@ -87,8 +98,6 @@ function createWorkspace(
     showNoteList: true,
     isNoteTransitioning: false,
     showAllNotes: false,
-    onRootFolderSelect: vi.fn(),
-    onChangeRootFolder: vi.fn(),
     onShowAllNotes: vi.fn(),
     onSelectFolder: vi.fn(),
     onSelectTag: vi.fn(),
@@ -104,6 +113,7 @@ function createWorkspace(
     onToggleNoteList: vi.fn(),
     onSaveErrorDismiss: vi.fn(),
     onLayoutModeChange: vi.fn(),
+    flushPendingSave: vi.fn().mockResolvedValue(undefined),
     ...overrides,
   }
 }
@@ -116,7 +126,6 @@ function renderAppShell(
 ) {
   const onSidebarWidthCommit = vi.fn()
   const onNoteListWidthCommit = vi.fn()
-  const onChangeRootFolder = vi.fn()
   const onCreateNote = vi.fn()
   const onCreateFolder = vi.fn()
   const onDeleteNote = vi.fn()
@@ -125,7 +134,7 @@ function renderAppShell(
 
   render(
     <AppShell
-      onChangeRootFolder={onChangeRootFolder}
+      activeRootPath="/notes"
       onCreateFolder={onCreateFolder}
       onCreateNote={onCreateNote}
       onDeleteFolder={onDeleteFolder}
@@ -133,6 +142,7 @@ function renderAppShell(
       onNoteListWidthCommit={onNoteListWidthCommit}
       onSidebarWidthCommit={onSidebarWidthCommit}
       settings={SETTINGS}
+      tabBar={TAB_BAR}
       workspace={workspace}
       {...props}
     />
@@ -142,7 +152,6 @@ function renderAppShell(
     workspace,
     onSidebarWidthCommit,
     onNoteListWidthCommit,
-    onChangeRootFolder,
   }
 }
 
@@ -214,8 +223,8 @@ describe('AppShell', () => {
     expect(onSidebarWidthCommit).not.toHaveBeenCalled()
   })
 
-  it('onToggleSidebar/onToggleNoteList/onChangeRootFolderがCustomTitleBar経由で呼ばれる', () => {
-    const { onChangeRootFolder, workspace } = renderAppShell()
+  it('onToggleSidebar/onToggleNoteList/タブ追加操作がCustomTitleBar経由で呼ばれる', () => {
+    const { workspace } = renderAppShell()
 
     fireEvent.click(screen.getByRole('button', { name: 'toggle-sidebar' }))
     expect(workspace.onToggleSidebar).toHaveBeenCalledTimes(1)
@@ -223,7 +232,7 @@ describe('AppShell', () => {
     fireEvent.click(screen.getByRole('button', { name: 'toggle-notelist' }))
     expect(workspace.onToggleNoteList).toHaveBeenCalledTimes(1)
 
-    fireEvent.click(screen.getByRole('button', { name: 'change-root' }))
-    expect(onChangeRootFolder).toHaveBeenCalledTimes(1)
+    fireEvent.click(screen.getByRole('button', { name: 'add-root' }))
+    expect(TAB_BAR.onAdd).toHaveBeenCalledTimes(1)
   })
 })

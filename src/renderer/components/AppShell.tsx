@@ -9,6 +9,7 @@ import { useResizablePane } from '@/renderer/hooks/useResizablePane'
 import { useEditorStatus } from '@/renderer/hooks/useEditorStatus'
 import { useAppVersion } from '@/renderer/hooks/useAppVersion'
 import type { UseNoteWorkspaceResult } from '@/renderer/hooks/useNoteWorkspace'
+import type { RootFolderTabBarProps } from '@/renderer/components/RootFolderTabBar'
 import type { AppSettings, MarkdownNoteMeta } from '@/shared/types'
 import type {
   EditorCursorPosition,
@@ -26,7 +27,8 @@ const MAX_NOTE_LIST_WIDTH = 600
 export interface AppShellProps {
   workspace: UseNoteWorkspaceResult
   settings: AppSettings
-  onChangeRootFolder: () => void
+  activeRootPath: string | undefined
+  tabBar: RootFolderTabBarProps
   onSidebarWidthCommit: (width: number) => void
   onNoteListWidthCommit: (width: number) => void
   onCreateNote: () => void
@@ -38,7 +40,8 @@ export interface AppShellProps {
 export function AppShell({
   workspace,
   settings,
-  onChangeRootFolder,
+  activeRootPath,
+  tabBar,
   onSidebarWidthCommit,
   onNoteListWidthCommit,
   onCreateNote,
@@ -78,11 +81,11 @@ export function AppShell({
   return (
     <div className="h-screen flex flex-col overflow-hidden bg-background">
       <CustomTitleBar
-        onChangeRootFolder={onChangeRootFolder}
         onToggleNoteList={workspace.onToggleNoteList}
         onToggleSidebar={workspace.onToggleSidebar}
         showNoteList={workspace.showNoteList}
         showSidebar={workspace.showSidebar}
+        tabBar={tabBar}
       />
       <div className="flex-1 flex overflow-hidden">
         {workspace.showSidebar && workspace.folderTree && (
@@ -117,10 +120,13 @@ export function AppShell({
         {workspace.showNoteList && (
           <>
             <NoteList
+              noteListMutation={workspace.noteListMutation}
               notes={workspace.filteredNotes}
               onCreateNote={onCreateNote}
               onDeleteNote={onDeleteNote}
+              onNoteRemovalComplete={workspace.onNoteRemovalComplete}
               onSelectNote={workspace.onSelectNote}
+              rootDir={activeRootPath}
               selectedFolder={workspace.selectedFolder}
               selectedNote={workspace.selectedNote?.filePath || null}
               width={noteListPane.width}
@@ -160,7 +166,7 @@ export function AppShell({
               onSelectionStatsChange={setSelectionStats}
               onToggleNoteList={workspace.onToggleNoteList}
               onToggleSidebar={workspace.onToggleSidebar}
-              rootDir={settings.rootDir}
+              rootDir={activeRootPath}
               saveError={workspace.saveError}
               showNoteList={workspace.showNoteList}
               showSidebar={workspace.showSidebar}

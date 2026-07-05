@@ -18,14 +18,24 @@ export interface FolderNode {
   notes: MarkdownNoteMeta[]
 }
 
+export interface RootFolderEntry {
+  path: string
+  lastSelectedFolder?: string
+  lastOpenedNotePath?: string
+}
+
 export interface AppSettings {
-  rootDir?: string
+  rootFolders: RootFolderEntry[]
+  activeRootFolder?: string
   editorLayoutMode: 'editor' | 'preview' | 'split'
   theme: 'light' | 'dark' | 'system'
   colorTheme: string
   language: 'en' | 'ja'
-  lastOpenedNotePath?: string
-  lastSelectedFolder?: string
+  // Legacy field — removed after migration
+  fontFamily?: string
+  // New per-language fields
+  fontFamilyEn?: string
+  fontFamilyJa?: string
   showSidebar?: boolean
   showNoteList?: boolean
   sidebarWidth?: number

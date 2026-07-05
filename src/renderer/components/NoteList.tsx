@@ -1,6 +1,6 @@
 import { useState, useMemo, useRef, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
-import { FiFileText, FiPlus, FiSearch, FiX } from 'react-icons/fi'
+import { LuFileText, LuPlus, LuSearch, LuX } from 'react-icons/lu'
 import { useVirtualizer } from '@tanstack/react-virtual'
 import type { MarkdownNoteMeta } from '@/shared/types'
 import { SimpleTooltip } from './ui/tooltip'
@@ -8,6 +8,9 @@ import { Button } from './ui/button'
 import { NoteItem } from './NoteItem'
 import { SortDropdown, type SortOption } from './SortDropdown'
 import { tauriApi as App } from '@/renderer/lib/tauriApi'
+import { useAnimatedNoteList } from '@/renderer/hooks/useAnimatedNoteList'
+import type { NoteListMutation } from '@/renderer/lib/noteListAnimation'
+import { ANIMATION_DURATION_MS } from '@/renderer/lib/noteListAnimation'
 
 interface NoteListProps {
   notes: MarkdownNoteMeta[]
@@ -18,6 +21,12 @@ interface NoteListProps {
   onDeleteNote?: (note: MarkdownNoteMeta) => void
   /** 指定時はpxで幅を固定する（未指定時は既存の固定幅クラスを使用） */
   width?: number
+  /** ノートを別ウィンドウで開く際に渡す、現在アクティブなルートフォルダのパス */
+  rootDir?: string
+  /** 直近のノート変更イベント（作成・削除）*/
+  noteListMutation?: NoteListMutation | null
+  /** 退去アニメーション完了時のコールバック */
+  onNoteRemovalComplete?: (filePath: string) => void
 }
 
 export function NoteList({
@@ -28,6 +37,9 @@ export function NoteList({
   onCreateNote,
   onDeleteNote,
   width,
+  rootDir,
+  noteListMutation,
+  onNoteRemovalComplete,
 }: NoteListProps) {
   const { t } = useTranslation()
   const [searchQuery, setSearchQuery] = useState('')
@@ -74,12 +86,20 @@ export function NoteList({
     return result
   }, [notes, searchQuery, sortOption])
 
+  // アニメーション付きノート一覧
+  const { displayEntries } = useAnimatedNoteList(
+    filteredAndSortedNotes,
+    noteListMutation ?? null,
+    onNoteRemovalComplete ?? (() => {})
+  )
+
   // 仮想スクロール
   const virtualizer = useVirtualizer({
-    count: filteredAndSortedNotes.length,
+    count: displayEntries.length,
     getScrollElement: () => scrollContainerRef.current,
     estimateSize: () => 80,
     overscan: 10,
+    getItemKey: index => displayEntries[index].note.filePath,
     measureElement:
       typeof window !== 'undefined' &&
       navigator.userAgent.indexOf('Firefox') === -1
@@ -87,13 +107,17 @@ export function NoteList({
         : undefined,
   })
 
-  const handleDoubleClick = useCallback(async (note: MarkdownNoteMeta) => {
-    try {
-      await App.window.openNoteWindow(note.filePath)
-    } catch (error) {
-      console.error('Failed to open note in new window:', error)
-    }
-  }, [])
+  const handleDoubleClick = useCallback(
+    async (note: MarkdownNoteMeta) => {
+      if (!rootDir) return
+      try {
+        await App.window.openNoteWindow(note.filePath, rootDir)
+      } catch (error) {
+        console.error('Failed to open note in new window:', error)
+      }
+    },
+    [rootDir]
+  )
 
   const getFolderDisplayName = () => {
     if (!selectedFolder || selectedFolder === '') {
@@ -118,7 +142,7 @@ export function NoteList({
         <div className="h-12 flex items-center justify-between px-4">
           <div className="flex items-center gap-2">
             <h2 className="text-heading-sm text-foreground flex items-center gap-2">
-              <FiFileText size={16} style={{ color: 'var(--theme-accent)' }} />
+              <LuFileText size={16} style={{ color: 'var(--theme-accent)' }} />
               {getFolderDisplayName()}
             </h2>
             <span className="text-xs text-muted-foreground font-medium px-2 py-0.5 bg-muted rounded-full">
@@ -133,7 +157,7 @@ export function NoteList({
                 size="icon"
                 variant="ghost"
               >
-                <FiPlus size={16} />
+                <LuPlus size={16} />
               </Button>
             </SimpleTooltip>
           )}
@@ -144,7 +168,7 @@ export function NoteList({
           <div className="flex w-full gap-2">
             <SortDropdown onChange={setSortOption} value={sortOption} />
             <div className="flex-1 relative">
-              <FiSearch
+              <LuSearch
                 className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
                 size={14}
               />
@@ -166,7 +190,7 @@ export function NoteList({
                   onClick={() => setSearchQuery('')}
                   type="button"
                 >
-                  <FiX size={12} />
+                  <LuX size={12} />
                 </button>
               )}
             </div>
@@ -175,7 +199,11 @@ export function NoteList({
       </div>
 
       {/* 仮想スクロールリスト */}
-      <div className="flex-1 overflow-y-auto" ref={scrollContainerRef}>
+      <div
+        aria-live="polite"
+        className="flex-1 overflow-y-auto"
+        ref={scrollContainerRef}
+      >
         {filteredAndSortedNotes.length > 0 ? (
           <div
             style={{
@@ -196,27 +224,29 @@ export function NoteList({
                   width: '100%',
                   marginTop: '5px',
                   transform: `translateY(${virtualItem.start}px)`,
+                  transition: noteListMutation
+                    ? `transform ${ANIMATION_DURATION_MS}ms ease`
+                    : 'none',
                 }}
               >
                 <NoteItem
+                  animationPhase={displayEntries[virtualItem.index].phase}
                   isSelected={
                     selectedNote ===
-                    filteredAndSortedNotes[virtualItem.index].filePath
+                    displayEntries[virtualItem.index].note.filePath
                   }
-                  note={filteredAndSortedNotes[virtualItem.index]}
+                  note={displayEntries[virtualItem.index].note}
                   onDelete={
                     onDeleteNote
                       ? () =>
-                          onDeleteNote(
-                            filteredAndSortedNotes[virtualItem.index]
-                          )
+                          onDeleteNote(displayEntries[virtualItem.index].note)
                       : undefined
                   }
                   onDoubleClick={() =>
-                    handleDoubleClick(filteredAndSortedNotes[virtualItem.index])
+                    handleDoubleClick(displayEntries[virtualItem.index].note)
                   }
                   onSelect={() =>
-                    onSelectNote(filteredAndSortedNotes[virtualItem.index])
+                    onSelectNote(displayEntries[virtualItem.index].note)
                   }
                 />
               </div>
@@ -408,14 +438,14 @@ export function NoteList({
             </p>
             {onCreateNote && (
               <Button className="mt-4" onClick={onCreateNote} size="sm">
-                <FiPlus size={14} />
+                <LuPlus size={14} />
                 {t('noteList.createNoteButton')}
               </Button>
             )}
           </div>
         ) : (
           <div className="p-8 text-center">
-            <FiSearch
+            <LuSearch
               className="mx-auto mb-4 text-muted-foreground/60"
               size={48}
             />

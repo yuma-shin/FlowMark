@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { FiTag, FiX } from 'react-icons/fi'
+import { LuTag, LuX } from 'react-icons/lu'
 import { SimpleTooltip } from './ui/tooltip'
 import type { MarkdownNoteMeta } from '@/shared/types'
 
@@ -55,7 +55,7 @@ export function TagListSection({
       <div className="h-10 flex items-center justify-between px-4 bg-muted/30">
         <div className="flex items-center gap-2">
           <h3 className="text-xs font-bold text-foreground flex items-center gap-2">
-            <FiTag size={14} style={{ color: 'var(--theme-accent)' }} />
+            <LuTag size={14} style={{ color: 'var(--theme-accent)' }} />
             {t('metadata.tags')}
           </h3>
           <span className="text-xs text-muted-foreground font-medium px-1.5 py-0.5 bg-muted rounded-full">
@@ -69,7 +69,7 @@ export function TagListSection({
               onClick={() => onSelectTag(null)}
               type="button"
             >
-              <FiX size={12} />
+              <LuX size={12} />
             </button>
           </SimpleTooltip>
         )}
@@ -78,7 +78,7 @@ export function TagListSection({
       <div className="max-h-48 overflow-y-auto p-2">
         {tagCounts.length === 0 ? (
           <div className="p-4 text-center">
-            <FiTag
+            <LuTag
               className="mx-auto mb-2 text-muted-foreground/40"
               size={24}
             />
@@ -98,7 +98,7 @@ export function TagListSection({
                 type="button"
               >
                 <div className="flex items-center gap-1.5 flex-1 min-w-0">
-                  <FiTag
+                  <LuTag
                     className="flex-shrink-0 text-muted-foreground"
                     size={12}
                   />

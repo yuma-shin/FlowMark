@@ -2,14 +2,14 @@ import type React from 'react'
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
-  FiX,
-  FiPlus,
-  FiFile,
-  FiFolder,
-  FiChevronRight,
-  FiChevronDown,
-  FiTag,
-} from 'react-icons/fi'
+  LuX,
+  LuPlus,
+  LuFile,
+  LuFolder,
+  LuChevronRight,
+  LuChevronDown,
+  LuTag,
+} from 'react-icons/lu'
 import {
   useFloating,
   autoUpdate,
@@ -245,7 +245,7 @@ export function MetadataEditor({
                   {...getReferenceProps()}
                   className="flex items-center gap-1.5 px-2 py-1 hover:bg-accent rounded transition-colors"
                 >
-                  <FiFolder size={12} />
+                  <LuFolder size={12} />
                   <span className="text-muted-foreground">
                     {currentFolder || t('metadata.root')}
                   </span>
@@ -288,9 +288,9 @@ export function MetadataEditor({
                                 type="button"
                               >
                                 {isExpanded ? (
-                                  <FiChevronDown size={14} />
+                                  <LuChevronDown size={14} />
                                 ) : (
-                                  <FiChevronRight size={14} />
+                                  <LuChevronRight size={14} />
                                 )}
                               </button>
                             )}
@@ -305,7 +305,7 @@ export function MetadataEditor({
                             onClick={() => handleMoveToFolder(folder.path)}
                             type="button"
                           >
-                            <FiFolder size={14} />
+                            <LuFolder size={14} />
                             <span>{folder.name}</span>
                           </button>
                         </div>
@@ -316,7 +316,7 @@ export function MetadataEditor({
               )}
             </>
           )}
-          <FiFile size={12} />
+          <LuFile size={12} />
           <span>{filePath.split(/[\\\\/]/).pop()}</span>
         </div>
         <div className="flex flex-wrap gap-1.5 items-center">
@@ -332,7 +332,7 @@ export function MetadataEditor({
               }}
               type="button"
             >
-              <FiPlus size={12} />
+              <LuPlus size={12} />
               {t('metadata.clickCreateTag')}
             </button>
           ) : (
@@ -361,7 +361,7 @@ export function MetadataEditor({
                     }}
                     type="button"
                   >
-                    <FiX size={12} />
+                    <LuX size={12} />
                   </button>
                 </span>
               ))}
@@ -451,7 +451,7 @@ export function MetadataEditor({
                             }
                             type="button"
                           >
-                            <FiTag className="flex-shrink-0" size={10} />
+                            <LuTag className="flex-shrink-0" size={10} />
                             <span className="truncate">{tag}</span>
                           </button>
                         ))}
@@ -475,7 +475,7 @@ export function MetadataEditor({
                     style={{ color: 'var(--theme-accent)' }}
                     type="button"
                   >
-                    <FiPlus size={14} />
+                    <LuPlus size={14} />
                   </button>
                 </SimpleTooltip>
               )}

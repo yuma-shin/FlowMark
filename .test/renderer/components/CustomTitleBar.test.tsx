@@ -51,15 +51,117 @@ describe('CustomTitleBar', () => {
     expect(onToggleNoteList).toHaveBeenCalledTimes(1)
   })
 
-  it('ルートフォルダ選択ボタンが onChangeRootFolder を呼ぶ', () => {
-    const onChangeRootFolder = vi.fn()
+  it('tabBarを渡すとタブ一覧が表示され、タブ操作のコールバックが呼ばれる', () => {
+    const onSelect = vi.fn()
+    const onAdd = vi.fn()
     renderWithProviders(
-      <CustomTitleBar onChangeRootFolder={onChangeRootFolder} />,
-      { settings: { rootDir: '/notes' } }
+      <CustomTitleBar
+        tabBar={{
+          tabs: [{ path: '/notes', name: 'notes', status: 'ok' }],
+          activePath: '/notes',
+          onSelect,
+          onClose: vi.fn(),
+          onReorder: vi.fn(),
+          onAdd,
+        }}
+      />
     )
 
-    fireEvent.click(screen.getByRole('button', { name: 'Select Folder' }))
-    expect(onChangeRootFolder).toHaveBeenCalledTimes(1)
+    expect(screen.getByText('notes')).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Add Root Folder' }))
+    expect(onAdd).toHaveBeenCalledTimes(1)
+  })
+
+  it('tabBarを渡さない場合はタブ領域を表示しない', () => {
+    renderWithProviders(<CustomTitleBar />)
+    expect(screen.queryByRole('tablist')).not.toBeInTheDocument()
+  })
+
+  it('タブ領域はmin-w-0とflex-1を持ち、幅超過時に自身のみが横スクロールする', () => {
+    renderWithProviders(
+      <CustomTitleBar
+        tabBar={{
+          tabs: [{ path: '/notes', name: 'notes', status: 'ok' }],
+          activePath: '/notes',
+          onSelect: vi.fn(),
+          onClose: vi.fn(),
+          onReorder: vi.fn(),
+          onAdd: vi.fn(),
+        }}
+      />
+    )
+
+    const tabContainer = screen.getByTestId('titlebar-tab-container')
+    expect(tabContainer).toHaveClass('min-w-0')
+    expect(tabContainer).toHaveClass('flex-1')
+  })
+
+  it('タブ領域は明示的にh-fullを持ち、子のパーセンテージ高さ解決が壊れないようにする', () => {
+    renderWithProviders(
+      <CustomTitleBar
+        tabBar={{
+          tabs: [{ path: '/notes', name: 'notes', status: 'ok' }],
+          activePath: '/notes',
+          onSelect: vi.fn(),
+          onClose: vi.fn(),
+          onReorder: vi.fn(),
+          onAdd: vi.fn(),
+        }}
+      />
+    )
+
+    const tabContainer = screen.getByTestId('titlebar-tab-container')
+    expect(tabContainer).toHaveClass('h-full')
+  })
+
+  it('タブ領域はno-dragなので、タブ数に関わらず常時ドラッグ可能な余白を別途用意する', () => {
+    renderWithProviders(
+      <CustomTitleBar
+        tabBar={{
+          tabs: [{ path: '/notes', name: 'notes', status: 'ok' }],
+          activePath: '/notes',
+          onSelect: vi.fn(),
+          onClose: vi.fn(),
+          onReorder: vi.fn(),
+          onAdd: vi.fn(),
+        }}
+      />
+    )
+
+    const tabContainer = screen.getByTestId('titlebar-tab-container')
+    const spacer = screen.getByTestId('titlebar-drag-spacer')
+    // タブのno-drag領域に飲み込まれないよう、タブコンテナの外側(兄弟)に置く
+    expect(tabContainer.contains(spacer)).toBe(false)
+    expect(spacer).toHaveAttribute('data-tauri-drag-region')
+  })
+
+  it('タブ領域はタイトルバー内で上下中央寄せされる', () => {
+    renderWithProviders(
+      <CustomTitleBar
+        tabBar={{
+          tabs: [{ path: '/notes', name: 'notes', status: 'ok' }],
+          activePath: '/notes',
+          onSelect: vi.fn(),
+          onClose: vi.fn(),
+          onReorder: vi.fn(),
+          onAdd: vi.fn(),
+        }}
+      />
+    )
+
+    const tabContainer = screen.getByTestId('titlebar-tab-container')
+    expect(tabContainer).not.toHaveClass('self-end')
+  })
+
+  it('タブが増えてもウィンドウ操作ボタン領域はflex-shrink-0で幅を維持する', () => {
+    renderWithProviders(<CustomTitleBar />)
+
+    const windowControls = screen.getByTestId('titlebar-window-controls')
+    expect(windowControls).toHaveClass('flex-shrink-0')
+
+    const secondaryControls = screen.getByTestId('titlebar-secondary-controls')
+    expect(secondaryControls).toHaveClass('flex-shrink-0')
   })
 
   it('ウィンドウ操作ボタン（最小化・最大化・閉じる）が機能する', async () => {

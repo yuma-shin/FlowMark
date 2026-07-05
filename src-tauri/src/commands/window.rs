@@ -3,6 +3,50 @@ use tauri::TitleBarStyle;
 use tauri::{command, AppHandle, Manager, WebviewUrl, WebviewWindowBuilder};
 
 #[command]
+pub async fn open_settings_window(app: AppHandle) -> Result<bool, String> {
+    let label = "settings";
+
+    // シングルトン: 既存ウィンドウがあればフォーカスのみ
+    if let Some(existing) = app.get_webview_window(label) {
+        let _ = existing.unminimize();
+        let _ = existing.set_focus();
+        return Ok(true);
+    }
+
+    let url = if cfg!(debug_assertions) {
+        WebviewUrl::External(
+            "http://localhost:1420/#/settings"
+                .parse()
+                .map_err(|e: url::ParseError| e.to_string())?,
+        )
+    } else {
+        WebviewUrl::App("index.html#/settings".into())
+    };
+
+    #[allow(unused_mut)]
+    let mut builder = WebviewWindowBuilder::new(&app, label, url)
+        .title("Notyra — Settings")
+        .inner_size(700.0, 600.0)
+        .min_inner_size(500.0, 400.0)
+        .center();
+
+    #[cfg(target_os = "macos")]
+    {
+        builder = builder.title_bar_style(TitleBarStyle::Overlay);
+    }
+    #[cfg(target_os = "windows")]
+    {
+        builder = builder.decorations(false);
+    }
+    #[cfg(target_os = "linux")]
+    {
+        builder = builder.decorations(false);
+    }
+
+    builder.build().map(|_| true).map_err(|e| e.to_string())
+}
+
+#[command]
 pub async fn open_note_window(
     app: AppHandle,
     note_path: String,

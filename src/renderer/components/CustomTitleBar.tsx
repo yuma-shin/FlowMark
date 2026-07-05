@@ -6,15 +6,12 @@ import {
   LuX,
   LuPanelLeft,
   LuList,
+  LuSettings,
 } from 'react-icons/lu'
 import { ICON_SIZE } from '@/renderer/lib/iconConstants'
 import { useTranslation } from 'react-i18next'
 import { SimpleTooltip } from './ui/tooltip'
 import { Button } from './ui/button'
-import { ThemeToggle } from './ThemeToggle'
-import { LanguageToggle } from './LanguageToggle'
-import { ColorThemeSelector } from './ColorThemeSelector'
-import { FontFamilySelector } from './FontFamilySelector'
 import {
   RootFolderTabBar,
   type RootFolderTabBarProps,
@@ -147,7 +144,7 @@ export function CustomTitleBar({
                 <RootFolderTabBar {...tabBar} />
               </div>
               {/* タブ領域はホイール操作を確実に届けるためno-dragにしているため、
-                  タブ数に関わらず常時ウィンドウをドラッグできる余白を別途確保する */}
+                    タブ数に関わらず常時ウィンドウをドラッグできる余白を別途確保する */}
               <div
                 className="w-5 h-full flex-shrink-0"
                 data-tauri-drag-region
@@ -198,10 +195,18 @@ export function CustomTitleBar({
           </SimpleTooltip>
         )}
         <div className="w-px h-4 bg-border mx-0.5" />
-        <FontFamilySelector />
-        <ColorThemeSelector />
-        <ThemeToggle />
-        <LanguageToggle />
+        <SimpleTooltip content={t('settings.title')}>
+          <Button
+            aria-label={t('settings.title')}
+            onClick={() => {
+              App.window.openSettingsWindow()
+            }}
+            size="icon"
+            variant="ghost"
+          >
+            <LuSettings size={ICON_SIZE.TITLEBAR} />
+          </Button>
+        </SimpleTooltip>
       </div>
 
       {/* ウィンドウ操作ボタン (Windows のみ) */}

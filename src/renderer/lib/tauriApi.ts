@@ -242,6 +242,9 @@ const windowApi = {
 
   openNoteWindow: (notePath: string, rootDir: string): Promise<boolean> =>
     invoke<boolean>('open_note_window', { notePath, rootDir }),
+
+  openSettingsWindow: (): Promise<boolean> =>
+    invoke<boolean>('open_settings_window'),
 }
 
 // ---------------------------------------------------------------------------

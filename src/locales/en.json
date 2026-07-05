@@ -183,6 +183,13 @@
     "allNotes": "All Notes",
     "allNotesTitle": "Show all notes"
   },
+  "settings": {
+    "title": "Settings",
+    "navigation": "Settings navigation",
+    "appearance": "Appearance",
+    "font": "Font",
+    "language": "Language"
+  },
   "sortDropdown": {
     "sortBy": "Sort by",
     "dateDesc": "Date (Newest)",

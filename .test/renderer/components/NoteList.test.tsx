@@ -3,10 +3,12 @@ import { render, screen, fireEvent, cleanup } from '@testing-library/react'
 import { NoteList } from '@/renderer/components/NoteList'
 import type { MarkdownNoteMeta } from '@/shared/types'
 
+const mockOpenNoteWindow = vi.fn()
+
 vi.mock('@/renderer/lib/tauriApi', () => ({
   tauriApi: {
     window: {
-      openNoteWindow: vi.fn(),
+      openNoteWindow: (...args: unknown[]) => mockOpenNoteWindow(...args),
     },
   },
 }))
@@ -47,6 +49,39 @@ const NOTES: MarkdownNoteMeta[] = [
 describe('NoteList', () => {
   afterEach(() => {
     cleanup()
+    mockOpenNoteWindow.mockReset()
+  })
+
+  it('ダブルクリックすると、渡されたrootDirとともにopenNoteWindowが呼ばれる', () => {
+    render(
+      <NoteList
+        notes={NOTES}
+        onSelectNote={vi.fn()}
+        rootDir="/root-a"
+        selectedFolder=""
+        selectedNote={null}
+      />
+    )
+
+    fireEvent.doubleClick(screen.getByText('Note One'))
+    expect(mockOpenNoteWindow).toHaveBeenCalledWith(
+      NOTES[0].filePath,
+      '/root-a'
+    )
+  })
+
+  it('rootDirが未指定の場合、ダブルクリックしてもopenNoteWindowを呼ばない', () => {
+    render(
+      <NoteList
+        notes={NOTES}
+        onSelectNote={vi.fn()}
+        selectedFolder=""
+        selectedNote={null}
+      />
+    )
+
+    fireEvent.doubleClick(screen.getByText('Note One'))
+    expect(mockOpenNoteWindow).not.toHaveBeenCalled()
   })
 
   it('ノート一覧を表示する', () => {

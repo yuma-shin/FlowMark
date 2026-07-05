@@ -8,7 +8,8 @@
     "edit": "編集",
     "create": "作成",
     "confirm": "確認",
-    "language": "言語"
+    "language": "言語",
+    "loading": "読み込み中..."
   },
   "titleBar": {
     "selectFolder": "フォルダを選択",
@@ -16,7 +17,10 @@
     "toggleNoteList": "ノートリストを表示/非表示",
     "minimize": "最小化",
     "maximize": "最大化",
-    "close": "閉じる"
+    "close": "閉じる",
+    "addRootFolder": "ルートフォルダを追加",
+    "closeRootFolder": "閉じる",
+    "rootFolderMissing": "このフォルダは利用できません"
   },
   "sidebar": {
     "folders": "フォルダ",
@@ -112,6 +116,19 @@
     "importError": "無効なテーマファイルです。JSONの形式を確認してください。",
     "importDuplicate": "同じIDの組み込みテーマが既に存在します。"
   },
+  "font": {
+    "tooltip": "フォント",
+    "title": "フォント",
+    "hint": "UIに使用するフォントの組み合わせを選択",
+    "presets": "プリセット",
+    "englishFont": "英語フォント",
+    "japaneseFont": "日本語フォント",
+    "builtin": "ビルトイン",
+    "systemFonts": "システムフォント",
+    "systemFontsError": "システムフォントを取得できません",
+    "refresh": "更新",
+    "loading": "フォントを読み込み中..."
+  },
   "welcome": {
     "title": "Notyra へようこそ",
     "subtitle": "流れるような、心地よい執筆体験を",
@@ -165,6 +182,13 @@
     "createSubfolder": "サブフォルダを作成",
     "allNotes": "すべてのノート",
     "allNotesTitle": "すべてのノートを表示"
+  },
+  "settings": {
+    "title": "設定",
+    "navigation": "設定ナビゲーション",
+    "appearance": "外観",
+    "font": "フォント",
+    "language": "言語"
   },
   "sortDropdown": {
     "sortBy": "並び替え",

@@ -24,6 +24,7 @@ describe('AppContext', () => {
       const { result } = renderHook(() => useApp(), { wrapper })
 
       expect(result.current.settings).toEqual({
+        rootFolders: [],
         editorLayoutMode: 'split',
         theme: 'system',
         colorTheme: 'gray',
@@ -76,9 +77,52 @@ describe('AppContext', () => {
       const { result } = renderHook(() => useApp(), { wrapper })
 
       expect(result.current.settings.theme).toBe('dark')
-      expect(result.current.settings.rootDir).toBe('/notes')
+      expect(result.current.settings.rootFolders).toEqual([
+        { path: '/notes' },
+      ])
+      expect(result.current.settings.activeRootFolder).toBe('/notes')
       expect(result.current.settings.sidebarWidth).toBeUndefined()
       expect(result.current.settings.noteListWidth).toBeUndefined()
+    })
+
+    it('旧形式のrootDirを新形式のrootFoldersへ自動移行する', () => {
+      localStorage.setItem(
+        'appSettings',
+        JSON.stringify({
+          rootDir: '/legacy-notes',
+          lastSelectedFolder: 'sub',
+          lastOpenedNotePath: '/legacy-notes/sub/a.md',
+        }),
+      )
+
+      const { result } = renderHook(() => useApp(), { wrapper })
+
+      expect(result.current.settings.rootFolders).toEqual([
+        {
+          path: '/legacy-notes',
+          lastSelectedFolder: 'sub',
+          lastOpenedNotePath: '/legacy-notes/sub/a.md',
+        },
+      ])
+      expect(result.current.settings.activeRootFolder).toBe('/legacy-notes')
+    })
+
+    it('新形式のrootFoldersが既に存在する場合は移行を行わない', () => {
+      localStorage.setItem(
+        'appSettings',
+        JSON.stringify({
+          rootFolders: [{ path: '/a' }, { path: '/b' }],
+          activeRootFolder: '/b',
+        }),
+      )
+
+      const { result } = renderHook(() => useApp(), { wrapper })
+
+      expect(result.current.settings.rootFolders).toEqual([
+        { path: '/a' },
+        { path: '/b' },
+      ])
+      expect(result.current.settings.activeRootFolder).toBe('/b')
     })
   })
 

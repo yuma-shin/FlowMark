@@ -7,13 +7,39 @@ import { CreateNoteDialog } from '../components/CreateNoteDialog'
 import { CreateFolderDialog } from '../components/CreateFolderDialog'
 import { ConfirmDialog } from '../components/ConfirmDialog'
 import { AppShell } from '../components/AppShell'
+import { SkeletonScreen } from '../components/SkeletonScreen'
 import { useNoteWorkspace } from '../hooks/useNoteWorkspace'
+import { useRootFolders } from '../hooks/useRootFolders'
+import { useDelayedLoading } from '../hooks/useDelayedLoading'
+import { tauriApi as App } from '@/renderer/lib/tauriApi'
+import type { RootFolderTabBarProps } from '../components/RootFolderTabBar'
 import type { MarkdownNoteMeta } from '@/shared/types'
+
+const DEFAULT_SIDEBAR_WIDTH = 256
+const DEFAULT_NOTE_LIST_WIDTH = 320
 
 export function MainScreen() {
   const { t } = useTranslation()
   const { settings, updateSettings, isLoading: settingsLoading } = useApp()
-  const workspace = useNoteWorkspace()
+  const rootFolders = useRootFolders()
+  const activeRootPath = rootFolders.activeRootFolder?.path
+
+  const workspace = useNoteWorkspace({
+    rootDir: activeRootPath,
+    rootMeta: {
+      lastSelectedFolder: rootFolders.activeRootFolder?.lastSelectedFolder,
+      lastOpenedNotePath: rootFolders.activeRootFolder?.lastOpenedNotePath,
+    },
+    onMetaChange: meta => {
+      if (activeRootPath) {
+        rootFolders.updateRootMeta(activeRootPath, meta)
+      }
+    },
+  })
+
+  const isLoading = workspace.isLoading || settingsLoading
+  const showSkeleton = useDelayedLoading(isLoading)
+
   const [showCreateNoteDialog, setShowCreateNoteDialog] = useState(false)
   const [showCreateFolderDialog, setShowCreateFolderDialog] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
@@ -21,6 +47,39 @@ export function MainScreen() {
     type: 'note' | 'folder'
     data: any
   } | null>(null)
+
+  // タブ追加: フォルダ選択ダイアログを開き、選択されたフォルダを登録する
+  const handleAddRootFolder = async () => {
+    try {
+      const path = await App.markdown.selectRootFolder()
+      if (path) {
+        rootFolders.addRootFolder(path)
+      }
+    } catch (error) {
+      console.error('Failed to select root folder:', error)
+    }
+  }
+
+  // タブ切替: 保留中の変更を確定させてからアクティブなルートフォルダを切り替える
+  const handleSelectTab = (path: string) => {
+    if (path === activeRootPath) return
+    workspace.flushPendingSave().finally(() => {
+      rootFolders.setActiveRootFolder(path)
+    })
+  }
+
+  const tabBar: RootFolderTabBarProps = {
+    tabs: rootFolders.rootFolders.map(folder => ({
+      path: folder.path,
+      name: folder.path.split(/[\\/]/).filter(Boolean).pop() ?? folder.path,
+      status: rootFolders.rootStatus[folder.path] ?? 'ok',
+    })),
+    activePath: activeRootPath,
+    onSelect: handleSelectTab,
+    onClose: rootFolders.removeRootFolder,
+    onAdd: handleAddRootFolder,
+    onReorder: rootFolders.reorderRootFolders,
+  }
 
   // ノート削除の確認
   const handleDeleteNoteConfirm = (note: MarkdownNoteMeta) => {
@@ -51,108 +110,32 @@ export function MainScreen() {
     }
   }
 
-  if (workspace.isLoading || settingsLoading) {
+  if (showSkeleton) {
+    return (
+      <SkeletonScreen
+        noteListWidth={settings.noteListWidth ?? DEFAULT_NOTE_LIST_WIDTH}
+        showNoteList={settings.showNoteList ?? true}
+        showSidebar={settings.showSidebar ?? true}
+        sidebarWidth={settings.sidebarWidth ?? DEFAULT_SIDEBAR_WIDTH}
+        tabBar={tabBar}
+      />
+    )
+  }
+
+  if (isLoading) {
     return (
       <div className="h-screen flex flex-col overflow-hidden bg-background">
-        <CustomTitleBar />
-        <div className="flex-1 flex items-center justify-center">
-          <div className="flex flex-col items-center justify-center gap-6">
-            {/* Notyra Logo with pulse animation */}
-            <div className="relative flex items-center justify-center">
-              <div
-                className="absolute inset-0 rounded-2xl blur-xl opacity-50 animate-pulse"
-                style={{
-                  background:
-                    'linear-gradient(to bottom right, var(--theme-gradient-from), var(--theme-gradient-to))',
-                }}
-              ></div>
-              <svg
-                className="relative drop-shadow-2xl"
-                height="80"
-                viewBox="0 0 24 24"
-                width="80"
-              >
-                <defs>
-                  <linearGradient
-                    id="logoGradient"
-                    x1="0%"
-                    x2="100%"
-                    y1="0%"
-                    y2="100%"
-                  >
-                    <stop
-                      offset="0%"
-                      style={{ stopColor: 'var(--theme-gradient-from)' }}
-                    />
-                    <stop
-                      offset="100%"
-                      style={{ stopColor: 'var(--theme-gradient-to)' }}
-                    />
-                  </linearGradient>
-                </defs>
-                <path
-                  d="M6 2h12l6 6v14a2 2 0 01-2 2H6a2 2 0 01-2-2V4a2 2 0 012-2z"
-                  fill="url(#logoGradient)"
-                />
-                <line
-                  stroke="white"
-                  strokeLinecap="round"
-                  strokeWidth="1.5"
-                  x1="8"
-                  x2="16"
-                  y1="10"
-                  y2="10"
-                />
-                <line
-                  stroke="white"
-                  strokeLinecap="round"
-                  strokeWidth="1.5"
-                  x1="8"
-                  x2="16"
-                  y1="14"
-                  y2="14"
-                />
-                <circle cx="8" cy="18" fill="white" r="1" />
-                <circle cx="12" cy="18" fill="white" r="1" />
-                <circle cx="16" cy="18" fill="white" r="1" />
-              </svg>
-            </div>
-
-            {/* Spinning loader */}
-            <div className="relative w-16 h-16 flex items-center justify-center">
-              <div className="absolute inset-0 border-4 border-muted rounded-full"></div>
-              <div
-                className="absolute inset-0 border-4 border-transparent rounded-full animate-spin"
-                style={{ borderTopColor: 'var(--theme-accent)' }}
-              ></div>
-            </div>
-
-            {/* Loading text */}
-            <div className="flex flex-col items-center justify-center gap-2">
-              <h2
-                className="text-xl font-semibold bg-clip-text text-transparent"
-                style={{
-                  backgroundImage:
-                    'linear-gradient(to right, var(--theme-gradient-from), var(--theme-gradient-to))',
-                }}
-              >
-                Notyra
-              </h2>
-              <p className="text-sm text-muted-foreground animate-pulse">
-                読み込み中...
-              </p>
-            </div>
-          </div>
-        </div>
+        <CustomTitleBar tabBar={tabBar} />
+        <div className="flex-1 bg-background" />
       </div>
     )
   }
 
-  if (!settings.rootDir || workspace.showRootDialog) {
+  if (rootFolders.rootFolders.length === 0 || workspace.showRootDialog) {
     return (
       <div className="h-screen flex flex-col overflow-hidden">
-        <CustomTitleBar />
-        <WelcomeScreen onSelect={workspace.onRootFolderSelect} />
+        <CustomTitleBar tabBar={tabBar} />
+        <WelcomeScreen onSelect={rootFolders.addRootFolder} />
       </div>
     )
   }
@@ -160,7 +143,7 @@ export function MainScreen() {
   return (
     <>
       <AppShell
-        onChangeRootFolder={workspace.onChangeRootFolder}
+        activeRootPath={activeRootPath}
         onCreateFolder={() => setShowCreateFolderDialog(true)}
         onCreateNote={() => setShowCreateNoteDialog(true)}
         onDeleteFolder={handleDeleteFolderConfirm}
@@ -170,6 +153,7 @@ export function MainScreen() {
         }
         onSidebarWidthCommit={width => updateSettings({ sidebarWidth: width })}
         settings={settings}
+        tabBar={tabBar}
         workspace={workspace}
       />
 

@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
-  FiFolder,
-  FiFolderPlus,
-  FiChevronRight,
-  FiChevronDown,
-  FiTrash2,
-  FiArrowLeft,
-} from 'react-icons/fi'
+  LuFolder,
+  LuFolderPlus,
+  LuChevronRight,
+  LuChevronDown,
+  LuTrash2,
+  LuArrowLeft,
+} from 'react-icons/lu'
 import {
   useFloating,
   autoUpdate,
@@ -130,9 +130,9 @@ function FolderItem({
               type="button"
             >
               {isExpanded ? (
-                <FiChevronDown size={14} />
+                <LuChevronDown size={14} />
               ) : (
-                <FiChevronRight size={14} />
+                <LuChevronRight size={14} />
               )}
             </button>
           )}
@@ -167,7 +167,7 @@ function FolderItem({
                 onClick={handleCreateFolder}
                 type="button"
               >
-                <FiFolderPlus size={14} />
+                <LuFolderPlus size={14} />
                 <span>{t('folderTree.createSubfolder')}</span>
               </button>
             )}
@@ -177,7 +177,7 @@ function FolderItem({
                 onClick={handleDeleteFolder}
                 type="button"
               >
-                <FiTrash2 size={14} />
+                <LuTrash2 size={14} />
                 <span>{t('common.delete')}</span>
               </button>
             )}
@@ -417,7 +417,7 @@ export function FolderTree({
       >
         <div className="h-12 flex items-center justify-between px-4">
           <h2 className="text-heading-sm text-foreground flex items-center gap-2">
-            <FiFolder size={16} style={{ color: 'var(--theme-accent)' }} />
+            <LuFolder size={16} style={{ color: 'var(--theme-accent)' }} />
             {t('sidebar.folders')}
           </h2>
           {onCreateFolder && (
@@ -428,7 +428,7 @@ export function FolderTree({
                 size="icon"
                 variant="ghost"
               >
-                <FiFolderPlus size={16} />
+                <LuFolderPlus size={16} />
               </Button>
             </SimpleTooltip>
           )}
@@ -442,7 +442,7 @@ export function FolderTree({
                 onClick={handleNavigateUp}
                 type="button"
               >
-                <FiArrowLeft size={14} />
+                <LuArrowLeft size={14} />
               </button>
             </SimpleTooltip>
           )}

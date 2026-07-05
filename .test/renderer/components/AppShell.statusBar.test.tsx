@@ -77,11 +77,20 @@ const FOLDER_TREE: FolderNode = {
 }
 
 const SETTINGS: AppSettings = {
+  rootFolders: [{ path: '/notes' }],
+  activeRootFolder: '/notes',
   editorLayoutMode: 'split',
   theme: 'system',
   colorTheme: 'gray',
   language: 'en',
-  rootDir: '/notes',
+}
+
+const TAB_BAR = {
+  tabs: [{ path: '/notes', name: 'notes', status: 'ok' as const }],
+  activePath: '/notes',
+  onSelect: vi.fn(),
+  onClose: vi.fn(),
+  onAdd: vi.fn(),
 }
 
 function createWorkspace(
@@ -104,8 +113,6 @@ function createWorkspace(
     showNoteList: true,
     isNoteTransitioning: false,
     showAllNotes: false,
-    onRootFolderSelect: vi.fn(),
-    onChangeRootFolder: vi.fn(),
     onShowAllNotes: vi.fn(),
     onSelectFolder: vi.fn(),
     onSelectTag: vi.fn(),
@@ -121,6 +128,7 @@ function createWorkspace(
     onToggleNoteList: vi.fn(),
     onSaveErrorDismiss: vi.fn(),
     onLayoutModeChange: vi.fn(),
+    flushPendingSave: vi.fn().mockResolvedValue(undefined),
     ...overrides,
   }
 }
@@ -129,7 +137,7 @@ function renderAppShell(overrides: Partial<UseNoteWorkspaceResult> = {}) {
   const workspace = createWorkspace(overrides)
   const utils = render(
     <AppShell
-      onChangeRootFolder={vi.fn()}
+      activeRootPath="/notes"
       onCreateFolder={vi.fn()}
       onCreateNote={vi.fn()}
       onDeleteFolder={vi.fn()}
@@ -137,6 +145,7 @@ function renderAppShell(overrides: Partial<UseNoteWorkspaceResult> = {}) {
       onNoteListWidthCommit={vi.fn()}
       onSidebarWidthCommit={vi.fn()}
       settings={SETTINGS}
+      tabBar={TAB_BAR}
       workspace={workspace}
     />
   )
@@ -189,7 +198,7 @@ describe('AppShell StatusBar統合', () => {
 
     rerender(
       <AppShell
-        onChangeRootFolder={vi.fn()}
+        activeRootPath="/notes"
         onCreateFolder={vi.fn()}
         onCreateNote={vi.fn()}
         onDeleteFolder={vi.fn()}
@@ -197,6 +206,7 @@ describe('AppShell StatusBar統合', () => {
         onNoteListWidthCommit={vi.fn()}
         onSidebarWidthCommit={vi.fn()}
         settings={SETTINGS}
+        tabBar={TAB_BAR}
         workspace={{ ...workspace, selectedNote: NOTE_B, noteContent: 'other' }}
       />
     )
@@ -227,7 +237,7 @@ describe('AppShell StatusBar統合', () => {
 
     rerender(
       <AppShell
-        onChangeRootFolder={vi.fn()}
+        activeRootPath="/notes"
         onCreateFolder={vi.fn()}
         onCreateNote={vi.fn()}
         onDeleteFolder={vi.fn()}
@@ -235,6 +245,7 @@ describe('AppShell StatusBar統合', () => {
         onNoteListWidthCommit={vi.fn()}
         onSidebarWidthCommit={vi.fn()}
         settings={SETTINGS}
+        tabBar={TAB_BAR}
         workspace={{ ...workspace, noteContent: 'Hello!' }}
       />
     )

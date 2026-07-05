@@ -3,6 +3,7 @@ import type {
   MarkdownNoteMeta,
   FolderNode,
   AppSettings,
+  RootFolderEntry,
   NoteContent,
 } from '@/shared/types'
 
@@ -59,8 +60,16 @@ describe('AppSettings 型', () => {
     >()
   })
 
-  it('rootDir がオプショナルな string である', () => {
-    expectTypeOf<AppSettings['rootDir']>().toEqualTypeOf<string | undefined>()
+  it('rootFolders が RootFolderEntry の配列である', () => {
+    expectTypeOf<AppSettings['rootFolders']>().toEqualTypeOf<
+      RootFolderEntry[]
+    >()
+  })
+
+  it('activeRootFolder がオプショナルな string である', () => {
+    expectTypeOf<AppSettings['activeRootFolder']>().toEqualTypeOf<
+      string | undefined
+    >()
   })
 
   it('sidebarWidth と noteListWidth がオプショナルな number である', () => {
@@ -69,6 +78,18 @@ describe('AppSettings 型', () => {
     >()
     expectTypeOf<AppSettings['noteListWidth']>().toEqualTypeOf<
       number | undefined
+    >()
+  })
+})
+
+describe('RootFolderEntry 型', () => {
+  it('path が string で、per-rootメタデータがオプショナルな string である', () => {
+    expectTypeOf<RootFolderEntry['path']>().toBeString()
+    expectTypeOf<RootFolderEntry['lastSelectedFolder']>().toEqualTypeOf<
+      string | undefined
+    >()
+    expectTypeOf<RootFolderEntry['lastOpenedNotePath']>().toEqualTypeOf<
+      string | undefined
     >()
   })
 })

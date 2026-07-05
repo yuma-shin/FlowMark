@@ -28,6 +28,7 @@ parking_lot = "0.12"
 urlencoding = "2"
 url = "2"
 base64 = "0.22"
+font-kit = "0.14"
 
 [features]
 custom-protocol = ["tauri/custom-protocol"]

@@ -1,6 +1,6 @@
 import type React from 'react'
 import { useState, useRef } from 'react'
-import { FiCheck, FiUpload, FiTrash2 } from 'react-icons/fi'
+import { LuCheck, LuUpload, LuTrash2 } from 'react-icons/lu'
 import { useTranslation } from 'react-i18next'
 import { useApp } from '../contexts/AppContext'
 import {
@@ -177,7 +177,7 @@ export function ColorThemeSelector() {
                   </span>
                   {/* Selected checkmark */}
                   {isSelected && (
-                    <FiCheck
+                    <LuCheck
                       className="text-muted-foreground shrink-0"
                       size={13}
                     />
@@ -190,7 +190,7 @@ export function ColorThemeSelector() {
                       title={t('colorTheme.delete')}
                       type="button"
                     >
-                      <FiTrash2 size={12} />
+                      <LuTrash2 size={12} />
                     </button>
                   )}
                 </div>
@@ -208,7 +208,7 @@ export function ColorThemeSelector() {
               onClick={handleImportClick}
               type="button"
             >
-              <FiUpload size={11} />
+              <LuUpload size={11} />
               {t('colorTheme.import')}
             </button>
           </div>

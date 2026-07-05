@@ -240,8 +240,11 @@ const windowApi = {
 
   isMaximized: (): Promise<boolean> => getCurrentWindow().isMaximized(),
 
-  openNoteWindow: (notePath: string): Promise<boolean> =>
-    invoke<boolean>('open_note_window', { notePath }),
+  openNoteWindow: (notePath: string, rootDir: string): Promise<boolean> =>
+    invoke<boolean>('open_note_window', { notePath, rootDir }),
+
+  openSettingsWindow: (): Promise<boolean> =>
+    invoke<boolean>('open_settings_window'),
 }
 
 // ---------------------------------------------------------------------------

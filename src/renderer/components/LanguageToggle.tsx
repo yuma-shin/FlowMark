@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next'
-import { FiGlobe } from 'react-icons/fi'
+import { LuGlobe } from 'react-icons/lu'
 import { useApp } from '../contexts/AppContext'
+import { ICON_SIZE } from '../lib/iconConstants'
 import { Button } from './ui/button'
 import { DropdownMenu } from './ui/dropdown-menu'
 
@@ -19,7 +20,7 @@ export function LanguageToggle() {
       onChange={changeLanguage}
       trigger={
         <Button aria-label={t('common.language')} size="icon" variant="ghost">
-          <FiGlobe size={16} />
+          <LuGlobe size={ICON_SIZE.TITLEBAR} />
         </Button>
       }
       value={settings.language}

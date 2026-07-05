@@ -8,7 +8,8 @@
     "edit": "Edit",
     "create": "Create",
     "confirm": "Confirm",
-    "language": "Language"
+    "language": "Language",
+    "loading": "Loading..."
   },
   "titleBar": {
     "selectFolder": "Select Folder",
@@ -16,7 +17,10 @@
     "toggleNoteList": "Toggle Note List",
     "minimize": "Minimize",
     "maximize": "Maximize",
-    "close": "Close"
+    "close": "Close",
+    "addRootFolder": "Add Root Folder",
+    "closeRootFolder": "Close",
+    "rootFolderMissing": "This folder is unavailable"
   },
   "sidebar": {
     "folders": "Folders",
@@ -112,6 +116,19 @@
     "importError": "Invalid theme file. Please check the JSON format.",
     "importDuplicate": "A built-in theme with this ID already exists."
   },
+  "font": {
+    "tooltip": "Font Family",
+    "title": "Font Family",
+    "hint": "Choose a font combination for the UI",
+    "presets": "Presets",
+    "englishFont": "English Font",
+    "japaneseFont": "Japanese Font",
+    "builtin": "Built-in",
+    "systemFonts": "System Fonts",
+    "systemFontsError": "System fonts unavailable",
+    "refresh": "Refresh",
+    "loading": "Loading fonts..."
+  },
   "welcome": {
     "title": "Welcome to Notyra",
     "subtitle": "A smooth and comfortable writing experience",
@@ -165,6 +182,13 @@
     "createSubfolder": "Create Subfolder",
     "allNotes": "All Notes",
     "allNotesTitle": "Show all notes"
+  },
+  "settings": {
+    "title": "Settings",
+    "navigation": "Settings navigation",
+    "appearance": "Appearance",
+    "font": "Font",
+    "language": "Language"
   },
   "sortDropdown": {
     "sortBy": "Sort by",

@@ -20,6 +20,6 @@ pub fn list_system_fonts() -> Result<Vec<String>, String> {
     }
 
     // Sort case-insensitively
-    result.sort_by(|a, b| a.to_lowercase().cmp(&b.to_lowercase()));
+    result.sort_by_key(|a| a.to_lowercase());
     Ok(result)
 }

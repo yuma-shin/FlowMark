@@ -183,6 +183,13 @@
     "allNotes": "すべてのノート",
     "allNotesTitle": "すべてのノートを表示"
   },
+  "settings": {
+    "title": "設定",
+    "navigation": "設定ナビゲーション",
+    "appearance": "外観",
+    "font": "フォント",
+    "language": "言語"
+  },
   "sortDropdown": {
     "sortBy": "並び替え",
     "dateDesc": "日付 (新しい順)",

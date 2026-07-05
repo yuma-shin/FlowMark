@@ -72,6 +72,7 @@ pub fn run() {
             commands::export::open_print_window,
             // ウィンドウコマンド
             commands::window::open_note_window,
+            commands::window::open_settings_window,
             // フォントコマンド
             commands::font::list_system_fonts,
         ])

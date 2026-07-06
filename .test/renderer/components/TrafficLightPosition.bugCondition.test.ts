@@ -5,8 +5,8 @@
  *
  * This test encodes the EXPECTED (correct) behavior:
  * - Main window (tauri.macos.conf.json) has trafficLightPosition: { x: 14, y: 15 }
- * - Settings window (open_settings_window) calls .traffic_light_position(14.0, 15.0)
- * - Note editor window (open_note_window) calls .traffic_light_position(14.0, 15.0)
+ * - Settings window (open_settings_window) calls .traffic_light_position(LogicalPosition::new(14.0, 15.0))
+ * - Note editor window (open_note_window) calls .traffic_light_position(LogicalPosition::new(14.0, 15.0))
  *
  * On UNFIXED code, these tests MUST FAIL — failure confirms the bug exists.
  *
@@ -17,8 +17,8 @@
  *
  * Counterexamples to document:
  * - Main window: tauri.macos.conf.json has titleBarStyle "Overlay" but no trafficLightPosition
- * - Settings window: open_settings_window sets .title_bar_style(Overlay) but no .traffic_light_position()
- * - Note editor: open_note_window sets .title_bar_style(Overlay) but no .traffic_light_position()
+ * - Settings window: open_settings_window sets .title_bar_style(Overlay) but no .traffic_light_position(LogicalPosition::new(...))
+ * - Note editor: open_note_window sets .title_bar_style(Overlay) but no .traffic_light_position(LogicalPosition::new(...))
  * - All macOS overlay windows lack trafficLightPosition, causing buttons to render at
  *   OS default (~y=7) instead of centered (y=15) within 44px titlebar
  */
@@ -63,12 +63,12 @@ describe('Bug Condition Exploration: Traffic Light Position Not Set on macOS Ove
    * Property 1: Bug Condition - Settings window traffic_light_position
    *
    * For open_settings_window in window.rs, the #[cfg(target_os = "macos")] block
-   * SHALL include .traffic_light_position(14.0, 15.0) to vertically center
+   * SHALL include .traffic_light_position(LogicalPosition::new(14.0, 15.0)) to vertically center
    * traffic light buttons within the 44px titlebar.
    *
    * On UNFIXED code: .traffic_light_position() call is missing → test FAILS (confirms bug)
    */
-  it('open_settings_window includes .traffic_light_position(14.0, 15.0) in macOS cfg block', () => {
+  it('open_settings_window includes .traffic_light_position(LogicalPosition::new(14.0, 15.0)) in macOS cfg block', () => {
     const rustContent = fs.readFileSync(WINDOW_RS, 'utf-8')
 
     // Extract the open_settings_window function body
@@ -81,20 +81,20 @@ describe('Bug Condition Exploration: Traffic Light Position Not Set on macOS Ove
     // Verify precondition: title_bar_style(TitleBarStyle::Overlay) is present
     expect(settingsFnBody).toContain('title_bar_style(TitleBarStyle::Overlay)')
 
-    // Bug condition check: traffic_light_position(14.0, 15.0) MUST be present
-    expect(settingsFnBody).toMatch(/traffic_light_position\(\s*14\.0\s*,\s*15\.0\s*\)/)
+    // Bug condition check: traffic_light_position(LogicalPosition::new(14.0, 15.0)) MUST be present
+    expect(settingsFnBody).toMatch(/traffic_light_position\(LogicalPosition::new\(\s*14\.0\s*,\s*15\.0\s*\)\)/)
   })
 
   /**
    * Property 1: Bug Condition - Note editor window traffic_light_position
    *
    * For open_note_window in window.rs, the #[cfg(target_os = "macos")] block
-   * SHALL include .traffic_light_position(14.0, 15.0) to vertically center
+   * SHALL include .traffic_light_position(LogicalPosition::new(14.0, 15.0)) to vertically center
    * traffic light buttons within the 44px titlebar.
    *
    * On UNFIXED code: .traffic_light_position() call is missing → test FAILS (confirms bug)
    */
-  it('open_note_window includes .traffic_light_position(14.0, 15.0) in macOS cfg block', () => {
+  it('open_note_window includes .traffic_light_position(LogicalPosition::new(14.0, 15.0)) in macOS cfg block', () => {
     const rustContent = fs.readFileSync(WINDOW_RS, 'utf-8')
 
     // Extract the open_note_window function body
@@ -107,7 +107,7 @@ describe('Bug Condition Exploration: Traffic Light Position Not Set on macOS Ove
     // Verify precondition: title_bar_style(TitleBarStyle::Overlay) is present
     expect(noteFnBody).toContain('title_bar_style(TitleBarStyle::Overlay)')
 
-    // Bug condition check: traffic_light_position(14.0, 15.0) MUST be present
-    expect(noteFnBody).toMatch(/traffic_light_position\(\s*14\.0\s*,\s*15\.0\s*\)/)
+    // Bug condition check: traffic_light_position(LogicalPosition::new(14.0, 15.0)) MUST be present
+    expect(noteFnBody).toMatch(/traffic_light_position\(LogicalPosition::new\(\s*14\.0\s*,\s*15\.0\s*\)\)/)
   })
 })

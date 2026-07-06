@@ -1,5 +1,5 @@
 #[cfg(target_os = "macos")]
-use tauri::TitleBarStyle;
+use tauri::{LogicalPosition, TitleBarStyle};
 use tauri::{command, AppHandle, Manager, WebviewUrl, WebviewWindowBuilder};
 
 #[command]
@@ -34,7 +34,7 @@ pub async fn open_settings_window(app: AppHandle) -> Result<bool, String> {
     {
         builder = builder
             .title_bar_style(TitleBarStyle::Overlay)
-            .traffic_light_position(14.0, 15.0);
+            .traffic_light_position(LogicalPosition::new(14.0, 15.0));
     }
     #[cfg(target_os = "windows")]
     {
@@ -99,7 +99,7 @@ pub async fn open_note_window(
     {
         builder = builder
             .title_bar_style(TitleBarStyle::Overlay)
-            .traffic_light_position(14.0, 15.0);
+            .traffic_light_position(LogicalPosition::new(14.0, 15.0));
     }
     #[cfg(not(target_os = "macos"))]
     {

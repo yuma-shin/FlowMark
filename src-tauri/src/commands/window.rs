@@ -32,7 +32,9 @@ pub async fn open_settings_window(app: AppHandle) -> Result<bool, String> {
 
     #[cfg(target_os = "macos")]
     {
-        builder = builder.title_bar_style(TitleBarStyle::Overlay);
+        builder = builder
+            .title_bar_style(TitleBarStyle::Overlay)
+            .traffic_light_position(14.0, 15.0);
     }
     #[cfg(target_os = "windows")]
     {
@@ -95,7 +97,9 @@ pub async fn open_note_window(
 
     #[cfg(target_os = "macos")]
     {
-        builder = builder.title_bar_style(TitleBarStyle::Overlay);
+        builder = builder
+            .title_bar_style(TitleBarStyle::Overlay)
+            .traffic_light_position(14.0, 15.0);
     }
     #[cfg(not(target_os = "macos"))]
     {

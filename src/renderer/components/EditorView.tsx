@@ -464,7 +464,6 @@ export function EditorView({
         {layoutMode === 'editor' && (
           <div className="flex-1 overflow-auto">
             <CodeMirror
-              key={filePath}
               basicSetup={{
                 lineNumbers: true,
                 foldGutter: true,
@@ -475,6 +474,7 @@ export function EditorView({
               }}
               extensions={extensions}
               initialState={initialState ?? undefined}
+              key={filePath}
               onChange={handleChange}
               onCreateEditor={handleEditorCreate}
               theme={currentTheme}
@@ -492,7 +492,6 @@ export function EditorView({
               style={{ width: `${splitPosition}%`, flexShrink: 0 }}
             >
               <CodeMirror
-                key={filePath}
                 basicSetup={{
                   lineNumbers: true,
                   foldGutter: true,
@@ -503,6 +502,7 @@ export function EditorView({
                 }}
                 extensions={extensions}
                 initialState={initialState ?? undefined}
+                key={filePath}
                 onChange={handleChange}
                 onCreateEditor={handleEditorCreate}
                 theme={currentTheme}

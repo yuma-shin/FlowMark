@@ -54,7 +54,10 @@ export function removeEntry(state: HistoryState, index: number): HistoryState {
     return state
   }
 
-  const newEntries = [...state.entries.slice(0, index), ...state.entries.slice(index + 1)]
+  const newEntries = [
+    ...state.entries.slice(0, index),
+    ...state.entries.slice(index + 1),
+  ]
 
   let newCursor = state.cursor
   if (newEntries.length === 0) {

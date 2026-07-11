@@ -15,10 +15,15 @@ export interface EditorStateCacheHookResult {
    * コンテンツ不一致時はキャッシュを破棄してundefinedを返す。
    * @returns initialState prop用のオブジェクト or undefined
    */
-  restoreState: (filePath: string, currentContent: string) => {
-    json: unknown
-    fields: { history: typeof historyField }
-  } | undefined
+  restoreState: (
+    filePath: string,
+    currentContent: string
+  ) =>
+    | {
+        json: unknown
+        fields: { history: typeof historyField }
+      }
+    | undefined
 
   /**
    * 指定ファイルパスのキャッシュを無効化する。
@@ -51,37 +56,46 @@ export function clearEditorStateCache(): void {
 }
 
 export function useEditorStateCache(): EditorStateCacheHookResult {
-  const saveCurrentState = useCallback((filePath: string, view: CodemirrorEditorView) => {
-    try {
-      const stateFields = { history: historyField }
-      const json = view.state.toJSON(stateFields)
-      const documentContent = view.state.doc.toString()
-      sharedCache.set(filePath, { json, documentContent })
-    } catch (e) {
-      console.warn('[useEditorStateCache] Failed to serialize editor state:', e)
-    }
-  }, [])
-
-  const restoreState = useCallback((filePath: string, currentContent: string) => {
-    try {
-      const entry = sharedCache.get(filePath)
-      if (!entry) {
-        return undefined
+  const saveCurrentState = useCallback(
+    (filePath: string, view: CodemirrorEditorView) => {
+      try {
+        const stateFields = { history: historyField }
+        const json = view.state.toJSON(stateFields)
+        const documentContent = view.state.doc.toString()
+        sharedCache.set(filePath, { json, documentContent })
+      } catch (e) {
+        console.warn(
+          '[useEditorStateCache] Failed to serialize editor state:',
+          e
+        )
       }
+    },
+    []
+  )
 
-      if (entry.documentContent !== currentContent) {
+  const restoreState = useCallback(
+    (filePath: string, currentContent: string) => {
+      try {
+        const entry = sharedCache.get(filePath)
+        if (!entry) {
+          return undefined
+        }
+
+        if (entry.documentContent !== currentContent) {
+          sharedCache.delete(filePath)
+          return undefined
+        }
+
+        const stateFields = { history: historyField }
+        return { json: entry.json, fields: stateFields }
+      } catch (e) {
+        console.warn('[useEditorStateCache] Failed to restore editor state:', e)
         sharedCache.delete(filePath)
         return undefined
       }
-
-      const stateFields = { history: historyField }
-      return { json: entry.json, fields: stateFields }
-    } catch (e) {
-      console.warn('[useEditorStateCache] Failed to restore editor state:', e)
-      sharedCache.delete(filePath)
-      return undefined
-    }
-  }, [])
+    },
+    []
+  )
 
   const invalidate = useCallback((filePath: string) => {
     sharedCache.delete(filePath)

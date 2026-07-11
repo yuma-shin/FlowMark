@@ -65,7 +65,9 @@ function loadPersistedHistories(): Record<string, HistoryState> {
 
     // Rule 2: histories must be a non-null object
     if (typeof data.histories !== 'object' || data.histories === null) {
-      console.error('[navigationHistory] Invalid data: histories is not an object')
+      console.error(
+        '[navigationHistory] Invalid data: histories is not an object'
+      )
       return {}
     }
 
@@ -74,7 +76,9 @@ function loadPersistedHistories(): Record<string, HistoryState> {
 
     for (const [rootPath, value] of Object.entries(histories)) {
       if (typeof value !== 'object' || value === null) {
-        console.error(`[navigationHistory] Invalid data for root "${rootPath}": not an object`)
+        console.error(
+          `[navigationHistory] Invalid data for root "${rootPath}": not an object`
+        )
         result[rootPath] = createInitialState()
         continue
       }
@@ -82,15 +86,22 @@ function loadPersistedHistories(): Record<string, HistoryState> {
       const entry = value as Record<string, unknown>
 
       // Rule 3: entries must be an array of strings
-      if (!Array.isArray(entry.entries) || !entry.entries.every((e: unknown) => typeof e === 'string')) {
-        console.error(`[navigationHistory] Invalid data for root "${rootPath}": entries is not a string array`)
+      if (
+        !Array.isArray(entry.entries) ||
+        !entry.entries.every((e: unknown) => typeof e === 'string')
+      ) {
+        console.error(
+          `[navigationHistory] Invalid data for root "${rootPath}": entries is not a string array`
+        )
         result[rootPath] = createInitialState()
         continue
       }
 
       // Rule 5: entries.length must be <= MAX_HISTORY_SIZE
       if (entry.entries.length > MAX_HISTORY_SIZE) {
-        console.error(`[navigationHistory] Invalid data for root "${rootPath}": entries exceeds MAX_HISTORY_SIZE`)
+        console.error(
+          `[navigationHistory] Invalid data for root "${rootPath}": entries exceeds MAX_HISTORY_SIZE`
+        )
         result[rootPath] = createInitialState()
         continue
       }
@@ -102,7 +113,9 @@ function loadPersistedHistories(): Record<string, HistoryState> {
         entry.cursor < -1 ||
         entry.cursor > entry.entries.length - 1
       ) {
-        console.error(`[navigationHistory] Invalid data for root "${rootPath}": cursor out of range`)
+        console.error(
+          `[navigationHistory] Invalid data for root "${rootPath}": cursor out of range`
+        )
         result[rootPath] = createInitialState()
         continue
       }
@@ -158,7 +171,9 @@ export function useNavigationHistory({
   checkNoteExists = defaultCheckNoteExists,
 }: UseNavigationHistoryParams): UseNavigationHistoryResult {
   // ルートフォルダごとの全履歴を保持するRef（起動時にlocalStorageから復元）
-  const historiesRef = useRef<Record<string, HistoryState>>(loadPersistedHistories())
+  const historiesRef = useRef<Record<string, HistoryState>>(
+    loadPersistedHistories()
+  )
 
   // 現在のアクティブルートフォルダの履歴状態（UIの再レンダリング用）
   const [currentState, setCurrentState] = useState<HistoryState>(() => {
@@ -192,7 +207,8 @@ export function useNavigationHistory({
     (filePath: string) => {
       if (!activeRootFolder) return
 
-      const current = historiesRef.current[activeRootFolder] ?? createInitialState()
+      const current =
+        historiesRef.current[activeRootFolder] ?? createInitialState()
       const newState = pushEntry(current, filePath)
       historiesRef.current[activeRootFolder] = newState
       setCurrentState(newState)
@@ -292,8 +308,9 @@ export function useNavigationHistory({
   // キーボードショートカット: macOS Cmd+[/], Windows Alt+←/→
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      const isMac = App.platform === 'darwin' ||
-                    App.platform.toLowerCase().startsWith('mac')
+      const isMac =
+        App.platform === 'darwin' ||
+        App.platform.toLowerCase().startsWith('mac')
 
       if (isMac) {
         if (e.metaKey && !e.ctrlKey && !e.altKey && !e.shiftKey) {
@@ -324,7 +341,8 @@ export function useNavigationHistory({
 
   // 導出値
   const currentFilePath =
-    currentState.cursor >= 0 && currentState.cursor < currentState.entries.length
+    currentState.cursor >= 0 &&
+    currentState.cursor < currentState.entries.length
       ? currentState.entries[currentState.cursor]
       : null
 

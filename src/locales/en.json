@@ -22,6 +22,10 @@
     "closeRootFolder": "Close",
     "rootFolderMissing": "This folder is unavailable"
   },
+  "navigation": {
+    "back": "Back",
+    "forward": "Forward"
+  },
   "sidebar": {
     "folders": "Folders",
     "notes": "Notes",

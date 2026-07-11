@@ -22,6 +22,10 @@
     "closeRootFolder": "閉じる",
     "rootFolderMissing": "このフォルダは利用できません"
   },
+  "navigation": {
+    "back": "戻る",
+    "forward": "進む"
+  },
   "sidebar": {
     "folders": "フォルダ",
     "notes": "ノート",

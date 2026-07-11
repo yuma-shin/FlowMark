@@ -17,6 +17,7 @@ import { useTextSelection } from '@/renderer/hooks/useTextSelection'
 import { useAlertAutocomplete } from '@/renderer/hooks/useAlertAutocomplete'
 import { useEditorScrollSync } from '@/renderer/hooks/useEditorScrollSync'
 import { useSplitView } from '@/renderer/hooks/useSplitView'
+import { useEditorStateCache } from '@/renderer/hooks/useEditorStateCache'
 import { useImageInsertion } from '@/renderer/hooks/useImageInsertion'
 import { usePdfExport } from '@/renderer/hooks/usePdfExport'
 import { createBlockquoteDecorationExtension } from '@/renderer/lib/codemirror/blockquoteDecoration'
@@ -95,6 +96,7 @@ interface EditorViewProps {
   allNotes?: MarkdownNoteMeta[]
   onCursorChange?: (position: EditorCursorPosition | null) => void
   onSelectionStatsChange?: (stats: SelectionStats | null) => void
+  filePath?: string
 }
 
 export function EditorView({
@@ -119,6 +121,7 @@ export function EditorView({
   allNotes,
   onCursorChange,
   onSelectionStatsChange,
+  filePath,
 }: EditorViewProps) {
   const allTags = useMemo(() => {
     if (!allNotes) return []
@@ -133,6 +136,10 @@ export function EditorView({
     return Array.from(tagSet).sort((a, b) => a.localeCompare(b, 'ja'))
   }, [allNotes])
 
+  // Editor state cache for undo history persistence across note switches
+  const { saveCurrentState, restoreState } = useEditorStateCache()
+  const prevFilePathRef = useRef<string | undefined>(filePath)
+
   const [localContent, setLocalContent] = useState(content)
   const [currentTheme, setCurrentTheme] = useState(() => {
     const isDark = document.documentElement.classList.contains('dark')
@@ -141,6 +148,23 @@ export function EditorView({
   const editorViewRef = useRef<CodemirrorEditorView | null>(null)
   const editorScrollRef = useRef<HTMLDivElement | null>(null)
   const previewScrollRef = useRef<HTMLDivElement | null>(null)
+
+  // Save editor state before note switch, restore on new note
+  useEffect(() => {
+    if (prevFilePathRef.current && prevFilePathRef.current !== filePath) {
+      if (editorViewRef.current) {
+        saveCurrentState(prevFilePathRef.current, editorViewRef.current)
+      }
+    }
+    prevFilePathRef.current = filePath
+  }, [filePath, saveCurrentState])
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const initialState = useMemo(() => {
+    if (!filePath) return undefined
+    return restoreState(filePath, content)
+  }, [filePath]) // Only recompute on filePath change, NOT on content change
+
   const [showColorPalette, setShowColorPalette] = useState(false)
   const [showAlertPalette, setShowAlertPalette] = useState(false)
   const [showHeadingPalette, setShowHeadingPalette] = useState(false)
@@ -440,6 +464,7 @@ export function EditorView({
         {layoutMode === 'editor' && (
           <div className="flex-1 overflow-auto">
             <CodeMirror
+              key={filePath}
               basicSetup={{
                 lineNumbers: true,
                 foldGutter: true,
@@ -449,10 +474,11 @@ export function EditorView({
                 syntaxHighlighting: true,
               }}
               extensions={extensions}
+              initialState={initialState ?? undefined}
               onChange={handleChange}
               onCreateEditor={handleEditorCreate}
               theme={currentTheme}
-              value={localContent}
+              value={initialState ? undefined : localContent}
             />
           </div>
         )}
@@ -466,6 +492,7 @@ export function EditorView({
               style={{ width: `${splitPosition}%`, flexShrink: 0 }}
             >
               <CodeMirror
+                key={filePath}
                 basicSetup={{
                   lineNumbers: true,
                   foldGutter: true,
@@ -475,10 +502,11 @@ export function EditorView({
                   syntaxHighlighting: true,
                 }}
                 extensions={extensions}
+                initialState={initialState ?? undefined}
                 onChange={handleChange}
                 onCreateEditor={handleEditorCreate}
                 theme={currentTheme}
-                value={localContent}
+                value={initialState ? undefined : localContent}
               />
             </div>
 

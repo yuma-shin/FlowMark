@@ -16,6 +16,7 @@ import {
   RootFolderTabBar,
   type RootFolderTabBarProps,
 } from './RootFolderTabBar'
+import { NavigationButtons } from './NavigationButtons'
 import { tauriApi as App } from '@/renderer/lib/tauriApi'
 
 interface CustomTitleBarProps {
@@ -24,6 +25,10 @@ interface CustomTitleBarProps {
   showNoteList?: boolean
   onToggleSidebar?: () => void
   onToggleNoteList?: () => void
+  canGoBack?: boolean
+  canGoForward?: boolean
+  onGoBack?: () => void
+  onGoForward?: () => void
 }
 
 export function CustomTitleBar({
@@ -32,6 +37,10 @@ export function CustomTitleBar({
   showNoteList,
   onToggleSidebar,
   onToggleNoteList,
+  canGoBack,
+  canGoForward,
+  onGoBack,
+  onGoForward,
 }: CustomTitleBarProps) {
   const [isMaximized, setIsMaximized] = useState(false)
   const { t } = useTranslation()
@@ -131,6 +140,14 @@ export function CustomTitleBar({
           >
             <NotyraLogo />
           </div>
+          {onGoBack && onGoForward && (
+            <NavigationButtons
+              canGoBack={canGoBack ?? false}
+              canGoForward={canGoForward ?? false}
+              onGoBack={onGoBack}
+              onGoForward={onGoForward}
+            />
+          )}
           {tabBar && (
             <>
               <div

@@ -6,6 +6,7 @@ import { StatusBar } from '../components/StatusBar'
 import { useApp } from '../contexts/AppContext'
 import { useEditorStatus } from '@/renderer/hooks/useEditorStatus'
 import { useAppVersion } from '@/renderer/hooks/useAppVersion'
+import { invalidateEditorStateCache } from '@/renderer/hooks/useEditorStateCache'
 import type { MarkdownNoteMeta } from '@/shared/types'
 import type {
   EditorCursorPosition,
@@ -119,6 +120,8 @@ export function EditorScreen() {
           }
 
           reloadTimeoutRef.current = window.setTimeout(() => {
+            // 外部変更検知時にキャッシュを無効化
+            invalidateEditorStateCache(decodedPath)
             loadNote()
           }, 300)
         }
@@ -197,6 +200,7 @@ export function EditorScreen() {
       <div className="flex-1 flex overflow-hidden">
         <EditorView
           content={noteContent}
+          filePath={note?.filePath}
           isStandaloneWindow={true}
           layoutMode={layoutMode}
           noteMeta={note}

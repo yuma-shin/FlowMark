@@ -35,6 +35,11 @@ export interface AppShellProps {
   onCreateFolder: () => void
   onDeleteNote: (note: MarkdownNoteMeta) => void
   onDeleteFolder: (folderPath: string) => void
+  onSelectNote?: (note: MarkdownNoteMeta) => void
+  canGoBack?: boolean
+  canGoForward?: boolean
+  onGoBack?: () => void
+  onGoForward?: () => void
 }
 
 export function AppShell({
@@ -48,6 +53,11 @@ export function AppShell({
   onCreateFolder,
   onDeleteNote,
   onDeleteFolder,
+  onSelectNote,
+  canGoBack,
+  canGoForward,
+  onGoBack,
+  onGoForward,
 }: AppShellProps) {
   const { t } = useTranslation()
 
@@ -81,6 +91,10 @@ export function AppShell({
   return (
     <div className="h-screen flex flex-col overflow-hidden bg-background">
       <CustomTitleBar
+        canGoBack={canGoBack}
+        canGoForward={canGoForward}
+        onGoBack={onGoBack}
+        onGoForward={onGoForward}
         onToggleNoteList={workspace.onToggleNoteList}
         onToggleSidebar={workspace.onToggleSidebar}
         showNoteList={workspace.showNoteList}
@@ -125,7 +139,7 @@ export function AppShell({
               onCreateNote={onCreateNote}
               onDeleteNote={onDeleteNote}
               onNoteRemovalComplete={workspace.onNoteRemovalComplete}
-              onSelectNote={workspace.onSelectNote}
+              onSelectNote={onSelectNote ?? workspace.onSelectNote}
               rootDir={activeRootPath}
               selectedFolder={workspace.selectedFolder}
               selectedNote={workspace.selectedNote?.filePath || null}
@@ -153,6 +167,7 @@ export function AppShell({
               allNotes={workspace.allNotes}
               content={workspace.noteContent}
               currentFolder={workspace.selectedFolder}
+              filePath={workspace.selectedNote?.filePath}
               folderTree={workspace.folderTree ?? undefined}
               isSaving={workspace.isSaving}
               layoutMode={settings.editorLayoutMode}

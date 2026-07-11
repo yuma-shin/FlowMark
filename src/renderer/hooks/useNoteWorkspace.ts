@@ -2,6 +2,10 @@ import { useEffect, useState, useRef, useCallback } from 'react'
 import { useApp } from '../contexts/AppContext'
 import { tauriApi as App } from '@/renderer/lib/tauriApi'
 import { stripFrontMatter } from '@/renderer/utils/frontMatter'
+import {
+  invalidateEditorStateCache,
+  clearEditorStateCache,
+} from '@/renderer/hooks/useEditorStateCache'
 import type { MarkdownNoteMeta, FolderNode, AppSettings } from '@/shared/types'
 import { ANIMATION_DURATION_MS } from '@/renderer/lib/noteListAnimation'
 import type { NoteListMutation } from '@/renderer/lib/noteListAnimation'
@@ -145,8 +149,8 @@ export function useNoteWorkspace({
   // 初期化
   useEffect(() => {
     const initialize = async () => {
-      // ルート変更時は即座に旧ルートの表示状態をリセットし、
-      // 新ルートのスキャンが完了するまで読み込み中であることを示す
+      // ルート変更時はキャッシュを全クリアし、旧ルートの表示状態をリセットする
+      clearEditorStateCache()
       setSelectedNote(null)
       setNoteContent('')
       setAllNotes([])
@@ -495,6 +499,8 @@ export function useNoteWorkspace({
 
         reloadTimeoutRef.current = window.setTimeout(async () => {
           try {
+            // 外部変更検知時にキャッシュを無効化
+            invalidateEditorStateCache(selectedNote.filePath)
             const content = await App.markdown.getNoteContent(
               selectedNote.filePath
             )
@@ -898,6 +904,9 @@ export function useNoteWorkspace({
     try {
       const success = await App.markdown.deleteNote(note.filePath)
       if (success) {
+        // ノート削除時にキャッシュを無効化
+        invalidateEditorStateCache(note.filePath)
+
         // ノートに紐づく画像を削除（fire-and-forget）
         const noteBaseName =
           note.filePath.replace(/\.md$/i, '').split(/[/\\]/).pop() || ''

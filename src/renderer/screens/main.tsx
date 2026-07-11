@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useApp } from '../contexts/AppContext'
 import { CustomTitleBar } from '../components/CustomTitleBar'
@@ -11,6 +11,7 @@ import { SkeletonScreen } from '../components/SkeletonScreen'
 import { useNoteWorkspace } from '../hooks/useNoteWorkspace'
 import { useRootFolders } from '../hooks/useRootFolders'
 import { useDelayedLoading } from '../hooks/useDelayedLoading'
+import { useNavigationHistory } from '../hooks/useNavigationHistory'
 import { tauriApi as App } from '@/renderer/lib/tauriApi'
 import type { RootFolderTabBarProps } from '../components/RootFolderTabBar'
 import type { MarkdownNoteMeta } from '@/shared/types'
@@ -39,6 +40,46 @@ export function MainScreen() {
 
   const isLoading = workspace.isLoading || settingsLoading
   const showSkeleton = useDelayedLoading(isLoading)
+
+  const navigation = useNavigationHistory({
+    activeRootFolder: activeRootPath,
+  })
+
+  const isNavigatingRef = useRef(false)
+
+  // ノート選択のラッパー: 通常の選択時のみ履歴に push する
+  const handleSelectNote = (note: MarkdownNoteMeta) => {
+    workspace.onSelectNote(note)
+    if (!isNavigatingRef.current) {
+      navigation.push(note.filePath)
+    }
+  }
+
+  // 戻る操作: goBack で取得したパスに該当するノートを表示（push しない）
+  const handleGoBack = async () => {
+    const filePath = await navigation.goBack()
+    if (filePath) {
+      const note = workspace.allNotes.find(n => n.filePath === filePath)
+      if (note) {
+        isNavigatingRef.current = true
+        workspace.onSelectNote(note)
+        isNavigatingRef.current = false
+      }
+    }
+  }
+
+  // 進む操作: goForward で取得したパスに該当するノートを表示（push しない）
+  const handleGoForward = async () => {
+    const filePath = await navigation.goForward()
+    if (filePath) {
+      const note = workspace.allNotes.find(n => n.filePath === filePath)
+      if (note) {
+        isNavigatingRef.current = true
+        workspace.onSelectNote(note)
+        isNavigatingRef.current = false
+      }
+    }
+  }
 
   const [showCreateNoteDialog, setShowCreateNoteDialog] = useState(false)
   const [showCreateFolderDialog, setShowCreateFolderDialog] = useState(false)
@@ -76,7 +117,10 @@ export function MainScreen() {
     })),
     activePath: activeRootPath,
     onSelect: handleSelectTab,
-    onClose: rootFolders.removeRootFolder,
+    onClose: (path: string) => {
+      navigation.removeRootHistory(path)
+      rootFolders.removeRootFolder(path)
+    },
     onAdd: handleAddRootFolder,
     onReorder: rootFolders.reorderRootFolders,
   }
@@ -144,13 +188,18 @@ export function MainScreen() {
     <>
       <AppShell
         activeRootPath={activeRootPath}
+        canGoBack={navigation.canGoBack}
+        canGoForward={navigation.canGoForward}
         onCreateFolder={() => setShowCreateFolderDialog(true)}
         onCreateNote={() => setShowCreateNoteDialog(true)}
         onDeleteFolder={handleDeleteFolderConfirm}
         onDeleteNote={handleDeleteNoteConfirm}
+        onGoBack={handleGoBack}
+        onGoForward={handleGoForward}
         onNoteListWidthCommit={width =>
           updateSettings({ noteListWidth: width })
         }
+        onSelectNote={handleSelectNote}
         onSidebarWidthCommit={width => updateSettings({ sidebarWidth: width })}
         settings={settings}
         tabBar={tabBar}
